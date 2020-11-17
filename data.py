@@ -24,9 +24,10 @@ class Song(object):
         self.duration = duration
 
     def __iter__(self):
-        return iter((self.id, self.title, self.artist, self.album, self.duration))
+        return iter((self.id, self.title,
+                     self.artist, self.album, self.duration))
 
-    def __dict__(self):
+    def to_dict(self):
         song = {
             "id": self.id,
             "title": self.title,
@@ -37,15 +38,14 @@ class Song(object):
         return song
 
     def get(self):
-        return self.__dict__()
+        return self.to_dict()
 
     def copy(self):
         return copy.deepcopy(self)
-    
-    def set_id(self, song_id):
-        self.id = song_id
 
-    def id(self):
+    def s_id(self, s_id=None):
+        if s_id is not None:
+            self.id = s_id
         return self.id
 
 
@@ -63,32 +63,36 @@ class Playlist(object):
     song_descr: Dict of descriptions for each song, indexed by id
     '''
 
-    def __init__(self, title, creator, descr="", songs=[], song_descr={}):
+    def __init__(self, title, creator, descr=""):
         self.id = None
         self.title = title
         self.descr = descr
         self.creator = creator
-        self.songs = songs
-        self.song_descr = song_descr
+        self.songs = list()
+        self.song_descr = dict()
+        self.size = 0
 
-        self.size = len(songs)
-
-    def add_song(self, song_id, descr):
-        self.songs.append(song_id)
-        self.song_descr[song_id] = descr
+    def add_song(self, song, descr=""):
+        self.songs.append(song)
+        self.song_descr[song.id] = descr
         self.size += 1
 
-    def del_song(self, song_id):
-        if song_id in songs:
-            song_index = songs.index(song_id)
-            deleted_song = songs.pop(song_index)
-            del song_descr[song_index]
+    def update_song_descr(self, song, descr):
+        self.song_descr[song.id] = descr
+
+    def remove_song(self, song):
+        if song in self.songs:
+            deleted_song = self.songs.pop(song)
+            del self.song_descr[song.id]
             self.size -= 1
+            return deleted_song
         else:
             raise ValueError("Song not found")
 
-    def set_id(self, playlist_id):
-        self.id = playlist_id
+    def id(self, p_id=None):
+        if p_id is not None:
+            self.id = p_id
+        return self.id
 
     def __iter__(self):
         return PlaylistIterator(self)
@@ -96,14 +100,16 @@ class Playlist(object):
     def __next__(self):
         pass
 
+
 class PlaylistIterator:
     '''
     Iterator for playlists
     '''
+
     def __init__(self, playlist):
         self.playlist = playlist
         self.index = 0
-    
+
     def __next__(self):
         if self.index < self.playlist.size:
             self.index += 1
