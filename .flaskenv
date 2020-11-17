@@ -1,0 +1,7 @@
+FLASK_APP=server
+FLASK_ENV=development
+
+FLASK_RUN_PORT=8080
+FLASK_RUN_HOST=0.0.0.0
+
+SETTINGS=settings.cfg
