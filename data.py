@@ -72,7 +72,7 @@ class Playlist(object):
         self.song_descr = dict()
         self.size = 0
 
-    def add_song(self, song, descr=""):
+    def add(self, song, descr=""):
         self.songs.append(song)
         self.song_descr[song.id] = descr
         self.size += 1
