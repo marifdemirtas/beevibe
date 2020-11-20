@@ -1,5 +1,15 @@
 {% extends "layout.html" %}
-{% block title %}Home{% endblock %}
+{% block title %}{% endblock %}
 {% block content %}
-    <h1>Home page no {{num}}</h1>
+    <div class="container-md text-center">
+        <div class="jumbotron text-center w-75">
+            <h1 id="welcome-header">Welcome to BeeVibe!</h1>   
+            <img id="welcome-img" src="https://cdn.pixabay.com/photo/2014/03/25/16/54/tape-297596_960_720.png">            
+            <p id="welcome-desc">BeeVibe helps you create and share personalized playlists.</p>
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('random') }}"><button type="button" href="/" class="btn btn-primary">Go to a random playlist!</button></a>
+                <button type="button" class="btn btn-primary">Create your playlist now!</button>
+            </div>
+        </div>
+    </div>
 {% endblock %}

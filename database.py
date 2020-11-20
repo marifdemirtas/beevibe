@@ -1,4 +1,4 @@
-from data import Object
+from data import *
 
 class Database(object):
 
@@ -33,7 +33,10 @@ class Database(object):
             self.song_id += 1
 
     def search_song_by_name(self, song_name):
+        pass
 
     def get_song(self, song_id):
+        pass
 
-    def del_song(self, song_id)
+    def del_song(self, song_id):
+        pass

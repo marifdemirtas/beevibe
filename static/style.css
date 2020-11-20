@@ -1,3 +1,24 @@
-h1 {
-    color: #e9601a;
+body{
+    background-image: url(https://cdn.pixabay.com/photo/2016/08/26/15/14/music-notes-1622424_960_720.jpg); 
+}
+
+.jumbotron{
+    margin: 2em auto;
+}
+
+.playlist-container{
+    background-color: white;
+}
+
+#welcome-header{
+    font-weight: 800;
+}
+
+#welcome-img{
+    width: 33%;
+    margin: 1em;
+}
+
+h1{
+    color:blue;
 }

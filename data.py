@@ -113,6 +113,6 @@ class PlaylistIterator:
     def __next__(self):
         if self.index < self.playlist.size:
             self.index += 1
-            return self.playlist.songs[self.index - 1]
+            return self.playlist.songs[self.index - 1].get()
         else:
             raise StopIteration()

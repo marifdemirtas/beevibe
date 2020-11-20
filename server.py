@@ -1,22 +1,27 @@
-from flask import Flask
+from flask import Flask, request
 
 import views
-from data import Object
+from data import *
 from database import Database
-
+import json
 
 def create_app():
     app = Flask(__name__)
     app.config.from_envvar("SETTINGS")
 
     app.add_url_rule('/', endpoint='index', view_func=views.index)
-    app.add_url_rule('/flowers', endpoint='flowers', view_func=views.flowers)
-    app.add_url_rule('/flower/<int:key>', endpoint='flower', view_func=views.flower)
-    app.add_url_rule('/add_flower', endpoint='add_flower', view_func=views.add_flower, methods=["GET", "POST"])
+    app.add_url_rule('/random', endpoint='random', view_func=views.rand_playlist)
+    app.add_url_rule('/some/<key>', endpoint='playlist', view_func=views.playlist)
+
+    @app.route('/search', methods=["POST"])
+    def search():
+        # do search
+        ans = f"the ans is {request.form['query']})"
+        b = "Hellow"
+        return {"result_1": ans, "result_2": b}
+
 
     db = Database()
-    db.add_object(Object("Papatya", "pembe"))
-    db.add_object(Object("Karanfil", "yeşil"))
     app.config["db"] = db
 
     return app

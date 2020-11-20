@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% block title %} - {{playlist.title}} by {{playlist.creator}} {% endblock %}
+{% block content %}
+    <div class="container-md text-center playlist-container">
+        <h1>{{playlist.title}}</h1>   
+        <h2>Created by {{playlist.creator}}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <td>Song</td>
+                    <td>Artist</td>
+                    <td>Album</td>
+                    <td>Duration</td>
+                    <td>Comments</td>
+                </tr>
+            </thead>
+            <tbody>
+            {% for song in playlist %}
+                <tr>
+                    <td>{{ song["title"] }}</td>
+                    <td>{{ song["artist"] }}</td>
+                    <td>{{ song["album"] }}</td>
+                    <td>{{ song["duration"] }}</td>
+                    {% if song["id"] in playlist.song_descr %}
+                    <td>{{playlist.song_descr[song["id"]]}}</td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
