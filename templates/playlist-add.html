@@ -1,8 +1,13 @@
 {% extends "layout.html" %}
-{% block title %} - {{playlist.title}} by {{playlist.creator}} {% endblock %}
+{% block title %} - Create a playlist {% endblock %}
 {% block content %}
     <div class="container-md text-center playlist-container">
-        <h1>What will you call your playlist?</h1>
-        <input type="text" name="title">Random word.</div>
+        <form class="form-control" action="" method="POST">
+        <h1><input type="text" name="playlist_title">What will you call your playlist?</h1>   
+        <h2><input type="text" name="playlist_creator">Created by: </input></h2>
+        <p><input type="text" name="playlist_descr">desc: </input></p>
+        <p><input type="color" name="playlist_color">color: </input></p>
+        <button class="btn">Submit</button>
+       </form>
     </div>
 {% endblock %}

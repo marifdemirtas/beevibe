@@ -12,6 +12,7 @@ def create_app():
     app.add_url_rule('/', endpoint='index', view_func=views.index)
     app.add_url_rule('/random', endpoint='random', view_func=views.rand_playlist)
     app.add_url_rule('/some/<key>', endpoint='playlist', view_func=views.playlist)
+    app.add_url_rule('/add', endpoint='playlist_add', methods=['GET', 'POST'], view_func=views.playlist_add)
 
     @app.route('/search', methods=["POST"])
     def search():

@@ -2,6 +2,7 @@
 Defines data models for: songs, playlists
 '''
 import copy
+import datetime
 
 
 class Song(object):
@@ -71,6 +72,8 @@ class Playlist(object):
         self.songs = list()
         self.song_descr = dict()
         self.size = 0
+        self.page = PlaylistPage()
+        self.comments = []
 
     def add(self, song, descr=""):
         self.songs.append(song)
@@ -88,6 +91,9 @@ class Playlist(object):
             return deleted_song
         else:
             raise ValueError("Song not found")
+
+    def add_comment(self, comment):
+        pass
 
     def id(self, p_id=None):
         if p_id is not None:
@@ -116,3 +122,27 @@ class PlaylistIterator:
             return self.playlist.songs[self.index - 1].get()
         else:
             raise StopIteration()
+
+
+class PlaylistPage:
+    '''
+    Stores the settings related to the page that will display the playlist
+    '''
+
+    def __init__(self, color=None, commenting=False):
+        self.color = color # tuple rgb
+        self.commenting = commenting
+
+
+class Comment:
+    '''
+    Helper class that contains a comment, its author, date
+    '''
+
+    def __init__(self, content, author, date=None):
+        self.content = content
+        self.author = author
+        if date:
+            self.date = date
+        else:
+            self.date = datetime.datetime.now()

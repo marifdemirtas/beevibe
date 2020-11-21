@@ -34,4 +34,17 @@ def playlist(key):
     playlist.add(s1)
     playlist.add(s2, "my " + key)
     playlist.add(s3)
+    playlist.page.commenting = True
     return render_template("playlist.html", playlist=playlist)
+
+
+def playlist_add():
+    if request.method == "GET":
+        return render_template("playlist-add.html")
+    else:
+        playlist = Playlist(title=request.form['playlist_title'],
+                            creator=request.form['playlist_creator'],
+                            descr=request.form['playlist_descr'])
+        playlist.page.color = request.form['playlist_color']
+        #return redirect(url_for("playlist", key=request.form['id']))
+        return render_template("playlist.html", playlist=playlist)

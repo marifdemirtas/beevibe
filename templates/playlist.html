@@ -1,10 +1,10 @@
 {% extends "layout.html" %}
 {% block title %} - {{playlist.title}} by {{playlist.creator}} {% endblock %}
 {% block content %}
-    <div class="container-md text-center playlist-container">
+    <div class="container-md text-center playlist-container" style="background: {{playlist.page.color}}">
         <h1>{{playlist.title}}</h1>   
         <h2>Created by {{playlist.creator}}</h2>
-        <table>
+        <table class="table">
             <thead>
                 <tr>
                     <td>Song</td>
@@ -28,5 +28,28 @@
             {% endfor %}
             </tbody>
         </table>
+        {% if playlist.page.commenting %}
+        <table class="table">
+            {% if playlist.page.comments|length > 0 %}
+            <thead>
+                <td>Author</td>
+                <td>Comment</td>
+                <td>Date</td>
+            </thead>
+            {% endif %}
+            {% for comment in playlist.page.comments %}
+            <tr>
+                <td>{{comment.author}}</td>
+                <td>{{comment.content}}</td>
+                <td>{{comment.date}}</td>
+            </tr>
+            {% endfor%}
+            <tr>
+                <td><input type="text" name="author">Enter a nickname: </input></td>
+                <td><input type="text" name="author">What do you think? </input></td>
+                <td><button class="btn">Submit</button></td>
+            </tr>
+        </table>
+        {% endif %}
     </div>
 {% endblock %}
