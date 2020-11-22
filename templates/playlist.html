@@ -1,9 +1,23 @@
 {% extends "layout.html" %}
 {% block title %} - {{playlist.title}} by {{playlist.creator}} {% endblock %}
 {% block content %}
-    <div class="container-md text-center playlist-container" style="background: {{playlist.page.color}}">
+    <div class="container-md text-center playlist-container" 
+        {% if playlist.page.color is not none %}
+            style="background: {{playlist.page.color}}"
+        {% endif %}
+        >
         <h1>{{playlist.title}}</h1>   
         <h2>Created by {{playlist.creator}}</h2>
+        {% if playlist.metadata.status %}
+        <div class="playlist-descr">
+            {% if playlist.metadata.image %}
+            <canvas id="playlist-thumbnail" width="100" height="100"></canvas>
+            {% endif %}
+            {% if playlist.metadata.descr %}
+            <p id="playlist-descr-content">{{playlist.metadata.descr}}</p>
+            {% endif %}
+        </div>
+        {% endif %}
         <table class="table">
             <thead>
                 <tr>
@@ -54,4 +68,17 @@
         </table>
         {% endif %}
     </div>
+{% endblock %}
+{% block script %}
+  <script type="text/javascript">
+    let img = new Image();
+    let canvas = document.querySelector('#welcome-canvas');
+    img.onload = () => {
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.getContext('2d').font = "italic bold 50px fantasy";
+        canvas.getContext('2d').fillText("Hello World", 100, 120);
+    };
+    img.src = "https://cdn.pixabay.com/photo/2014/03/25/16/54/tape-297596_960_720.png";
+//    will be the thumbnail";
+  </script>
 {% endblock %}

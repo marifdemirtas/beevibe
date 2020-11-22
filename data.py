@@ -67,13 +67,15 @@ class Playlist(object):
     def __init__(self, title, creator, descr=""):
         self.id = None
         self.title = title
-        self.descr = descr
         self.creator = creator
         self.songs = list()
         self.song_descr = dict()
         self.size = 0
         self.page = PlaylistPage()
         self.comments = []
+
+        self.metadata = Metadata()
+        self.metadata.set_descr(descr)
 
     def add(self, song, descr=""):
         self.songs.append(song)
@@ -129,7 +131,7 @@ class PlaylistPage:
     Stores the settings related to the page that will display the playlist
     '''
 
-    def __init__(self, color="#FFFFFF", commenting=False):
+    def __init__(self, color=None, commenting=False):
         self.color = color # 7 character hex string: #RRGGBB
         self.commenting = commenting
 
@@ -146,3 +148,23 @@ class Comment:
             self.date = date
         else:
             self.date = datetime.datetime.now()
+
+class Metadata:
+    '''
+    Helper class that contains some metadata about playlists
+    '''
+
+    def __init__(self, descr=None, image=None):
+        self.image = image
+        self.descr = descr
+        self.status = False
+        if descr or image:
+            self.status = True
+
+    def set_descr(self,content):
+        self.descr = content
+        self.status = True
+
+    def set_thumbnail(self,img):
+        self.thumbnail = img
+        self.status = True
