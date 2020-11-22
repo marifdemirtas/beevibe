@@ -38,7 +38,7 @@ body{
     font-weight: 800;
 }
 
-#welcome-img{
+#welcome-img, #welcome-canvas{
     width: 33%;
     margin: 1em;
 }

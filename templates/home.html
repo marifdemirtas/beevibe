@@ -4,7 +4,9 @@
     <div class="container-md text-center">
         <div class="jumbotron text-center w-75">
             <h1 id="welcome-header">Welcome to BeeVibe!</h1>   
-            <img id="welcome-img" src="https://cdn.pixabay.com/photo/2014/03/25/16/54/tape-297596_960_720.png">            
+            <div id="welcome-img-container">
+                <canvas id="welcome-canvas" width=960 height=615></canvas>
+            </div>
             <p id="welcome-desc">BeeVibe helps you create and share personalized playlists.</p>
             <div class="btn-group" role="group">
                 <a href="{{ url_for('random') }}"><button type="button" href="/" class="btn btn-primary">Go to a random playlist!</button></a>
@@ -12,4 +14,17 @@
             </div>
         </div>
     </div>
+{% endblock %}
+{% block script %}
+  <script type="text/javascript">
+    let img = new Image();
+    let canvas = document.querySelector('#welcome-canvas');
+    img.onload = () => {
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.getContext('2d').font = "italic bold 50px fantasy";
+        canvas.getContext('2d').fillText("Hello World", 100, 120);
+    };
+    img.src = "https://cdn.pixabay.com/photo/2014/03/25/16/54/tape-297596_960_720.png";
+//    img.src = "{{url_for('static', filename='image')}}"
+  </script>
 {% endblock %}
