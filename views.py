@@ -29,12 +29,9 @@ def rand_playlist():
 
 
 def playlist(key):
-    # database.get_playlist(key)
-    playlist = Playlist("baykuş", "arif", "Happy birthday!!")
-    playlist.add(s1)
-    playlist.add(s2, "my " + key)
-    playlist.add(s3)
-    playlist.page.commenting = True
+    playlist = current_app.config["db"].get_playlist(int(key))
+    # validate
+    print(playlist.songs)
     return render_template("playlist.html", playlist=playlist)
 
 

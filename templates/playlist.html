@@ -44,14 +44,14 @@
         </table>
         {% if playlist.page.commenting %}
         <table class="table">
-            {% if playlist.page.comments|length > 0 %}
+            {% if playlist.comments|length > 0 %}
             <thead>
                 <td>Author</td>
                 <td>Comment</td>
                 <td>Date</td>
             </thead>
             {% endif %}
-            {% for comment in playlist.page.comments %}
+            {% for comment in playlist.comments %}
             <tr>
                 <td>{{comment.author}}</td>
                 <td>{{comment.content}}</td>

@@ -97,10 +97,13 @@ class Playlist(object):
     def add_comment(self, comment):
         pass
 
-    def id(self, p_id=None):
+    def s_id(self, p_id=None):
         if p_id is not None:
             self.id = p_id
         return self.id
+
+    def copy(self):
+        return copy.deepcopy(self)
 
     def __iter__(self):
         return PlaylistIterator(self)
@@ -148,6 +151,7 @@ class Comment:
             self.date = date
         else:
             self.date = datetime.datetime.now()
+
 
 class Metadata:
     '''
