@@ -129,8 +129,8 @@ class PlaylistPage:
     Stores the settings related to the page that will display the playlist
     '''
 
-    def __init__(self, color=None, commenting=False):
-        self.color = color # tuple rgb
+    def __init__(self, color="#FFFFFF", commenting=False):
+        self.color = color # 7 character hex string: #RRGGBB
         self.commenting = commenting
 
 

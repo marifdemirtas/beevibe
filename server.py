@@ -16,10 +16,23 @@ def create_app():
 
     @app.route('/search', methods=["POST"])
     def search():
-        # do search
-        ans = f"the ans is {request.form['query']})"
-        b = "Hellow"
-        return {"result_1": ans, "result_2": b}
+        response = {}
+
+        # do search, set status accordingly
+        status = True
+        response["status"] = status
+
+        ans = f"Result related to {request.form['query']})"
+        b = f"Another result about {request.form['query']}"
+
+        if status:
+            # fill up result array
+            results = []
+            results.append(ans)
+            results.append(b)
+            response["results"] = results
+
+        return response
 
 
     db = Database()

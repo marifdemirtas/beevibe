@@ -10,6 +10,30 @@ body{
     background-color: white;
 }
 
+.search{
+    position: relative;
+}
+
+#search-input:focus + #search-results{
+    display: block;
+}
+
+#search-results{
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    padding: 0;
+    margin: 0;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #cbcfe2 #c8cee7 #c4c7d7;
+    border-radius: 3px;
+    background-color: #fdfdfd;
+}
+
 #welcome-header{
     font-weight: 800;
 }

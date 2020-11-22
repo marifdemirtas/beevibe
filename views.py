@@ -6,14 +6,14 @@ s1 = Song(title="SongTitle1",
           artist="Artist1",
           album="Album1",
           duration=120)
-s2 = Song(title="SongTitle1",
+s2 = Song(title="SongTitle2",
+          artist="Artist2",
+          album="Album2",
+          duration=123)
+s3 = Song(title="SongTitle3",
           artist="Artist1",
-          album="Album1",
-          duration=120)
-s3 = Song(title="SongTitle1",
-          artist="Artist1",
-          album="Album1",
-          duration=120)
+          album="Album2",
+          duration=125)
 s1.s_id(25)
 s2.s_id(30)
 s3.s_id(35)
