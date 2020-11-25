@@ -16,18 +16,24 @@ def featured():
     featured = current_app.config["db"].get_featured_playlists()
     return render_template("list-playlist.html", playlists=featured)
 
+
 def playlist(key):
     playlist = current_app.config["db"].get_playlist(int(key))
     # validate
     print(playlist.songs)
     return render_template("playlist.html", playlist=playlist)
 
+
 def export(key):
     export_obj = current_app.config["db"].get_playlist(int(key)).export()
     filename = 'attachment;filename=' + export_obj["title"] + '.json'
-    return Response(json.dumps(export_obj), 
-        mimetype="application/json",
-        headers={'Content-Disposition':filename})
+    
+    encoded_obj = json.dumps(export_obj, ensure_ascii=False).encode('utf8', 'ignore')
+    print(encoded_obj)
+    return Response(encoded_obj,
+                    mimetype="application/json",
+                    headers={'Content-Disposition': filename, 'charset': 'utf-8'})
+
 
 def playlist_add():
     if request.method == "GET":
