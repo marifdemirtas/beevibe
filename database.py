@@ -1,4 +1,5 @@
 from data import *
+import random
 
 songs = {}
 
@@ -21,18 +22,19 @@ playlists = {}
 
 playlists[1] = Playlist("gece", "arif")
 playlists[2] = Playlist("doğum", "mehmet")
-playlists[3] = Playlist("köprü", "demir")
+playlists[3] = Playlist("köprü", "demirtaş")
 
 playlists[1].metadata.set_descr("This is about the night")
 playlists[2].metadata.set_descr("Best played at sunrise")
 
-playlists[1].page.color = "#0a0022"
-playlists[2].page.color = "#af220a"
-playlists[3].page.color = "#0f1088"
+playlists[1].page.set_color("#0a0022")
+#playlists[2].page.set_color("#af220a")
+playlists[2].page.set_color("#aaffff")
+playlists[3].page.set_color("#0f1088")
 
-playlists[1].page.commenting = True
-playlists[2].page.commenting = False
-playlists[3].page.commenting = True
+playlists[1].page.set_commenting(True)
+playlists[2].page.set_commenting(False)
+playlists[3].page.set_commenting(True)
 playlists[3].comments = [Comment("I loved it", "jeff"), Comment("Didn't liked it that much", "nick")]
 
 for key in playlists:
@@ -54,31 +56,137 @@ class Database(object):
         self.playlist_id = 0
 
     def get_playlist(self, key):
-        playlist = self.playlists.get(key, 321).copy()
-        if playlist is not None:
+        '''
+        Fetches the playlist with given key, returns Playlist object
+        '''
+        playlist = self.playlists.get(key)
+        if playlist is None:
+            return playlist
+        else:
+            playlist = playlist.copy()
             for song_id in self.plmap[key]:
                 playlist.add(self.get_song(song_id))
         return playlist
 
+    def add_playlist(self, playlist):
+        '''
+        Adds the given playlist to the db
+        '''
+        playlist.s_id(5)
+        self.playlists[5] = playlist
+        self.plmap[5] = []
+        # update mappings, create id etc.
+        # return updated playlist
+        return playlist
+
+    def search_playlists_by_title(self, title):
+        '''
+        Returns the corePlaylist objects related with title.
+        '''
+        # search database for title and return the matching
+        # for playlist in query_results
+        #   build corePlaylists
+        res = [corePlaylist(1, "gece", "arif")]
+        return res
+
+    def search_playlists_by_creator(self, creator):
+        '''
+        Returns the corePlaylist objects related with creator.
+        '''
+        # search database for title and return the matching
+        # for playlist in query_results
+        #   build corePlaylists
+        res = [corePlaylist(1, "gece", "arif")]
+        return res
+
     def del_playlist(self, key):
+        '''
+        Deletes the playlist with given key.
+        '''
         if key in playlists:
-            del playlists[key]
+            del playlists[key] # cascade to other tables
 
-    def update_playlist(self, key, song_id):
-        if key in playlists:
-            playlists[key].add_song(song_id)
+    def update_playlist(self, playlist):
+        '''
+        Given a playlist object, updates the one in database with the same key
+        with the given object.
+        '''        
+        db_playlist = self.get_playlist(playlist.key)
+        # for diff_attr in (db_playlist, playlist)
+        #    update database accordingly
 
-    def add_song(self, song):
-        if song not in self.songs:
-            song.set_id(self.song_id)
-            self.songs[self.song_id] = song
-            self.song_id += 1
+    def add_songs_to_playlist(self, key, songs):
+        '''
+        Adds the songs given (as ids) to the playlist given (as key).
+        Returns the updated playlist.
+        '''
+        if key in playlist:
+            for song_id in songs:
+                pass
+                # update plmap
+        return self.get_playlist(key)
 
-    def search_song_by_name(self, song_name):
-        pass
+    def remove_songs_to_playlist(self, key, songs):
+        '''
+        Removes the songs given (as ids) from the playlist given (as key).
+        Returns the updated playlist.
+        '''
+        if key in playlist:
+            for song_id in songs:
+                pass
+                # remove song_id from plmap
+        return self.get_playlist(key)
+
+    def add_comment_to_playlist(self, key, comment):
+        '''
+        Adds a comment by an user to the database
+        '''
+        self.playlists[key].add_comment(comment)
+        # update playlist-comment mapping
+        return self.playlists[key]
+
+
+    def add_song_to_database(self, song):
+        '''
+        Adds a given song object to the database
+        '''
+        song.s_id(None)
+        # add song to songs database
+        db_id = 5 # get the id back
+        song.s_id(db_id)
+        return song
 
     def get_song(self, song_id):
-        return self.songs.get(song_id)
+        '''
+        Gets the song with the given id from the database
+        '''
+        song = self.songs.get(song_id)
+        if song is None:
+            return None
+        else:
+            return song.copy()
 
     def del_song(self, song_id):
-        pass
+        '''
+        Deletes the song with the given id from the database
+        '''
+        # remove song_id from songs
+
+    def get_featured_playlist(self):
+        '''
+        Returns a randomly selected playlist from featured ones
+        '''
+        # get a random key from featured playlists
+        return self.get_playlist(random.choice([1,2,3]))
+
+    def get_featured_playlists(self, n=15):
+        '''
+        Returns randomly chosen n featured playlists
+        '''
+        featured = []
+        for i in range(max(n, 3)): #3 = len of playlists
+            fpl = self.get_featured_playlist()
+            while(fpl in featured):
+                fpl = self.get_featured_playlist()
+            featured.append(fpl)
+        return [playlists[1], playlists[2], playlists[3]]

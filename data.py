@@ -3,7 +3,7 @@ Defines data models for: songs, playlists
 '''
 import copy
 import datetime
-
+import json
 
 class Song(object):
     '''
@@ -95,12 +95,22 @@ class Playlist(object):
             raise ValueError("Song not found")
 
     def add_comment(self, comment):
-        pass
+        self.comments.append(comment)
 
     def s_id(self, p_id=None):
         if p_id is not None:
             self.id = p_id
         return self.id
+
+    def export(self):
+        '''
+        Returns the playlist as a object to be exported
+        '''
+        export_obj = {"title": self.title,
+                      "creator": self.creator,
+                      "description": self.metadata.descr,
+                      "songs": [(song.to_dict(), self.song_descr.get(song.id, None)) for song in self.songs]}
+        return export_obj
 
     def copy(self):
         return copy.deepcopy(self)
@@ -110,6 +120,7 @@ class Playlist(object):
 
     def __next__(self):
         pass
+
 
 
 class PlaylistIterator:
@@ -135,8 +146,31 @@ class PlaylistPage:
     '''
 
     def __init__(self, color=None, commenting=False):
-        self.color = color # 7 character hex string: #RRGGBB
+        self.set_color(color) # 7 character hex string: #RRGGBB
+        self.set_commenting(commenting)
+
+    def set_commenting(self, commenting):
         self.commenting = commenting
+
+    def set_color(self, color):
+        '''
+        Computations done according to https://planetcalc.com/7779/
+        '''
+        if color is not None:
+            self.color = color
+            C_norm = ((int(color[1:3], 16) / 255),
+                      (int(color[3:5], 16) / 255),
+                      (int(color[5:7], 16) / 255))
+            C_lin = [((c + 0.055) / 1.055)**2.4 if c > 0.03928
+                     else c / 12.92 for c in C_norm]
+            luminance = 0.2126 * C_lin[0] + 0.7152 * C_lin[1] + 0.0722 * C_lin[2]
+            text_luma = (1 / 7) * (luminance - 0.3)
+            self.text_color = '#303133' if text_luma > 0.04 else '#ffffff'
+            # #303133 is dark with 0.03 luminance
+            # #ffffff is white with 1 luminance
+        else:
+            self.color = '#000000'
+            self.text_color = '#303133'
 
 
 class Comment:
@@ -172,3 +206,13 @@ class Metadata:
     def set_thumbnail(self,img):
         self.thumbnail = img
         self.status = True
+
+class corePlaylist:
+    '''
+    A compact playlist with only id, title, creator and permission info,
+    intended to be used in queries
+    '''
+    def __init__(self, p_id, title, creator):
+        self.id = p_id
+        self.title = title
+        self.creator = creator
