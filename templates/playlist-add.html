@@ -6,8 +6,33 @@
         <h1><input type="text" name="playlist_title" placeholder="What will you call your playlist?"></h1>   
         <h2><input type="text" name="playlist_creator" placeholder="Created by: "></h2>
         <p><input type="text" name="playlist_descr" placeholder="Enter an optional description"></p>
-        <p><input type="color" name="playlist_color"></p>
-        <button class="btn">Submit</button>
+        <p name="color_descr">Choose color: <input type="color" name="playlist_color"></p>
+        <button class="btn btn-warning">Submit</button>
        </form>
     </div>
+{% endblock %}
+{% block script %}
+<script type="text/javascript">
+    let container = document.querySelector('.playlist-container');
+    let color_input = document.getElementsByName('playlist_color')[0];
+    let color_descr = document.getElementsByName('color_descr')[0];
+    color_input.addEventListener('input', () => {
+        container.style.backgroundColor = color_input.value;
+        color_descr.style.color = ComputeTextColor(color_input.value)
+    });
+    console.log(color_input.value);
+    ComputeTextColor = (backgroundColor) => {
+        //from data
+        let r_norm = parseInt('0x' + backgroundColor.slice(1,3)) / 255;
+        let g_norm = parseInt('0x' + backgroundColor.slice(3,5)) / 255;
+        let b_norm = parseInt('0x' + backgroundColor.slice(5,7)) / 255;
+        let linearize = (c) => c > 0.03928 ? ((c + 0.055) / 1.055)**2.4 : c / 12.92
+        let r_lin = linearize(r_norm)
+        let g_lin = linearize(g_norm)
+        let b_lin = linearize(b_norm)
+        luminance = 0.2126 * r_lin + 0.7152 * g_lin + 0.0722 * b_lin
+        text_luma = (1 / 7) * (luminance - 0.3)
+        return text_luma > 0.04 ? '#303133' : '#ffffff'
+    }
+</script>
 {% endblock %}

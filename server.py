@@ -11,29 +11,12 @@ def create_app():
 
     app.add_url_rule('/', endpoint='index', view_func=views.index)
     app.add_url_rule('/random', endpoint='random', view_func=views.rand_playlist)
-    app.add_url_rule('/some/<key>', endpoint='playlist', view_func=views.playlist)
+    app.add_url_rule('/featured', endpoint='featured', view_func=views.featured)
+    app.add_url_rule('/playlist/<key>', endpoint='playlist', view_func=views.playlist)
     app.add_url_rule('/add', endpoint='playlist_add', methods=['GET', 'POST'], view_func=views.playlist_add)
-
-    @app.route('/search', methods=["POST"])
-    def search():
-        response = {}
-
-        # do search, set status accordingly
-        status = True
-        response["status"] = status
-
-        ans = f"Result related to {request.form['query']})"
-        b = f"Another result about {request.form['query']}"
-
-        if status:
-            # fill up result array
-            results = []
-            results.append(ans)
-            results.append(b)
-            response["results"] = results
-
-        return response
-
+    app.add_url_rule('/export/<key>', endpoint='export', view_func=views.export)
+    app.add_url_rule('/search', endpoint='search', methods=["POST"], view_func=views.search)
+    app.add_url_rule('/add_comment/<key>', endpoint='add_comment', methods=["POST"], view_func=views.add_comment)
 
     db = Database()
     app.config["db"] = db

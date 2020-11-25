@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container" style="background-color: white;">
+{% block explanation %}{% endblock %}
+    <table class="table">
+        {% for playlist in playlists%}
+        <tr>
+            <td>{{playlist.title}}</td>
+            <td>{{playlist.creator}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

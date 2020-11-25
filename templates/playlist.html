@@ -3,7 +3,8 @@
 {% block content %}
     <div class="container-md text-center playlist-container" 
         {% if playlist.page.color is not none %}
-            style="background: {{playlist.page.color}}"
+            style="background: {{playlist.page.color}};
+                   color: {{playlist.page.text_color}}"
         {% endif %}
         >
         <h1>{{playlist.title}}</h1>   
@@ -18,7 +19,7 @@
             {% endif %}
         </div>
         {% endif %}
-        <table class="table">
+        <table class="table" style="color: inherit">
             <thead>
                 <tr>
                     <td>Song</td>
@@ -43,7 +44,7 @@
             </tbody>
         </table>
         {% if playlist.page.commenting %}
-        <table class="table">
+        <table class="table" style="color: inherit">
             {% if playlist.comments|length > 0 %}
             <thead>
                 <td>Author</td>
@@ -59,14 +60,15 @@
             </tr>
             {% endfor%}
             <tr>
-                <form class="form-control" method="GET">
+                <form class="form-control" method="POST" action="{{url_for('add_comment', key=playlist.id)}}">
                 <td><input type="text" name="author">Enter a nickname: </input></td>
-                <td><input type="text" name="author">What do you think? </input></td>
-                <td><button class="btn">Submit</button></td>
+                <td><input type="text" name="content">What do you think? </input></td>
+                <td><button class="btn-success">Submit</button></td>
                 </form>
             </tr>
         </table>
         {% endif %}
+        <a href="{{url_for('export', key=playlist.id)}}"><button class="btn btn-lg btn-success">Export</button></a>
     </div>
 {% endblock %}
 {% block script %}
