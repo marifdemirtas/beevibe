@@ -1,6 +1,11 @@
 from data import *
 import random
 
+users = {
+    '1': "abc",
+    '2': "def"
+}
+
 songs = {}
 
 songs[0] = Song("Tütün Kâıt", "Ethnique Punch", "Sarhoş Baykuş", 228)
@@ -190,3 +195,6 @@ class Database(object):
                 fpl = self.get_featured_playlist()
             featured.append(fpl)
         return [playlists[1], playlists[2], playlists[3]]
+
+    def get_user_password(self, user_id):
+        return users.get(user_id)

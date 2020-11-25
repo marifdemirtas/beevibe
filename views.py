@@ -1,7 +1,8 @@
 from flask import render_template, current_app, abort, url_for, request, redirect, Response
-
+from user import get_user, User
 from data import *
 import json
+from flask_login import current_user, login_user, logout_user
 
 def index():
     playlist = current_app.config["db"].get_featured_playlist()
@@ -27,8 +28,8 @@ def playlist(key):
 def export(key):
     export_obj = current_app.config["db"].get_playlist(int(key)).export()
     filename = 'attachment;filename=' + export_obj["title"] + '.json'
-    
-    encoded_obj = json.dumps(export_obj, ensure_ascii=False).encode('utf8', 'ignore')
+
+    encoded_obj = json.dumps(export_obj, ensure_ascii=False).encode('utf8')
     print(encoded_obj)
     return Response(encoded_obj,
                     mimetype="application/json",
@@ -71,3 +72,20 @@ def search():
         response["results"] = results
 
     return response
+
+
+def login():
+    if request.method == "GET":
+        return render_template('login.html')
+    else:
+        user = get_user(request.form['username'])
+        if request.form['password'] == user.password:
+            login_user(user)
+            next_page = request.args.get("next", url_for("index"))
+            return redirect(next_page)
+        return render_template('login.html')
+
+
+def logout():
+    logout_user()
+    return redirect(url_for("index"))

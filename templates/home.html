@@ -4,6 +4,9 @@
     <div class="container-md text-center">
         <div class="jumbotron text-center w-75">
             <h1 id="welcome-header">Welcome to BeeVibe!</h1>   
+            {% if current_user.is_authenticated %}
+            <h1>{{current_user.username}}</h1>   
+            {% endif %}
             <div id="welcome-img-container">
                 <canvas id="welcome-canvas" width=960 height=615></canvas>
             </div>
