@@ -32,6 +32,7 @@
             <tbody>
             {% for song in playlist %}
                 <tr>
+                    <td><a href="{{url_for('remove_song', key=song.id)}}">Delete</a></td>
                     <td>{{ song["title"] }}</td>
                     <td>{{ song["artist"] }}</td>
                     <td>{{ song["album"] }}</td>
@@ -41,11 +42,15 @@
                     {% endif %}
                 </tr>
             {% endfor %}
+            <tr>
+                <td>Add</td>
+                <td>Artist</td>
+                <td>Album</td>
+                <td>Duration</td>
+                <td>Comments</td>
+            </tr>
             </tbody>
         </table>
-        {% if current_user.is_authenticated %}
-        <a href="{{url_for('playlist_edit', key=playlist.id)}}" class="btn btn-info">Edit</a>
-        {% endif %}
         {% if playlist.page.commenting %}
         <table class="table" style="color: inherit">
             {% if playlist.comments|length > 0 %}
@@ -60,17 +65,10 @@
                 <td>{{comment.author}}</td>
                 <td>{{comment.content}}</td>
                 <td>{{comment.date}}</td>
+                <td><a href="url_for('delete_comment', key=comment.id)">Delete</a></td>
             </tr>
             {% endfor%}
-            <tr>
-                <form class="form-control" method="POST" action="{{url_for('add_comment', key=playlist.id)}}">
-                <td><input type="text" name="author">Enter a nickname: </input></td>
-                <td><input type="text" name="content">What do you think? </input></td>
-                <td><button class="btn-success">Submit</button></td>
-                </form>
-            </tr>
         </table>
         {% endif %}
-        <a href="{{url_for('export', key=playlist.id)}}"><button class="btn btn-lg btn-success">Export</button></a>
     </div>
 {% endblock %}

@@ -186,6 +186,8 @@ class Comment:
         else:
             self.date = datetime.datetime.now()
 
+    def s_id(c_id):
+        self.id = c_id
 
 class Metadata:
     '''

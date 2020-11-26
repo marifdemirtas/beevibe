@@ -18,7 +18,6 @@ def load_user(user_id):
 def create_app():
     app = Flask(__name__)
     app.config.from_envvar("SETTINGS")
-    app.secret_key = "SECRET_KEY"
 
     app.add_url_rule('/', endpoint='index', view_func=views.index)
     app.add_url_rule('/random', endpoint='random', view_func=views.rand_playlist)
@@ -30,7 +29,9 @@ def create_app():
     app.add_url_rule('/add_comment/<key>', endpoint='add_comment', methods=["POST"], view_func=views.add_comment)
     app.add_url_rule('/login', endpoint='login', methods=["GET", "POST"], view_func=views.login)
     app.add_url_rule('/logout', endpoint='logout', view_func=views.logout)
-
+    app.add_url_rule('/playlist/<key>/edit', endpoint='playlist_edit', methods=['GET', 'POST'], view_func=views.playlist_edit)
+    app.add_url_rule('/delete_comment/<key>', view_func=views.delete_comment)
+    app.add_url_rule('/remove_song/<key>', view_func=views.remove_song)
 
     lm.init_app(app)
     lm.login_view = "login"

@@ -48,6 +48,20 @@ def playlist_add():
         return redirect(url_for("playlist", key=playlist.id))
 
 
+def playlist_edit(key):
+    if not current_user.is_authenticated:
+        return abort(404)
+    elif request.method == "GET":
+        playlist = current_app.config["db"].get_playlist(int(key))
+        return render_template("playlist_edit.html", playlist=playlist)
+
+
+def delete_comment(key):
+    pass
+
+def remove_song(key):
+    pass
+
 def add_comment(key):
     comment = Comment(request.form['content'], request.form['author'])
     current_app.config["db"].add_comment_to_playlist(int(key), comment)
