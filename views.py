@@ -2,7 +2,7 @@ from flask import render_template, current_app, abort, url_for, request, redirec
 from user import get_user, User
 from data import *
 import json
-from flask_login import current_user, login_user, logout_user
+from flask_login import current_user, login_user, logout_user, login_required
 
 def index():
     playlist = current_app.config["db"].get_featured_playlist()
@@ -12,6 +12,7 @@ def index():
 def rand_playlist():
     # generate random playlist key
     return redirect(url_for("playlist", key="rand"))
+
 
 def featured():
     featured = current_app.config["db"].get_featured_playlists()
@@ -36,22 +37,22 @@ def export(key):
                     headers={'Content-Disposition': filename, 'charset': 'utf-8'})
 
 
+@login_required
 def playlist_add():
     if request.method == "GET":
         return render_template("playlist-add.html")
     else:
         playlist = Playlist(title=request.form['playlist_title'],
-                            creator=request.form['playlist_creator'],
+                            creator=current_user.username,
                             descr=request.form['playlist_descr'])
         playlist.page.set_color(request.form['playlist_color'])
         playlist = current_app.config["db"].add_playlist(playlist)
         return redirect(url_for("playlist", key=playlist.id))
 
 
+@login_required
 def playlist_edit(key):
-    if not current_user.is_authenticated:
-        return abort(404)
-    elif request.method == "GET":
+    if request.method == "GET":
         playlist = current_app.config["db"].get_playlist(int(key))
         return render_template("playlist_edit.html", playlist=playlist)
 
@@ -59,8 +60,22 @@ def playlist_edit(key):
 def delete_comment(key):
     pass
 
+
 def remove_song(key):
-    pass
+    song_ids = request.form.keys()
+    songs = [int(sid) for sid in song_ids]
+    print(f"Songs to be removed are: {songs}")
+    current_app.config["db"].remove_songs_from_playlist(int(key), songs)
+    return redirect(url_for("playlist_edit", key=key))
+
+
+def add_song(key):
+    song = Song(request.form["new_song"], request.form["new_artist"],
+                request.form["new_album"], request.form["new_duration"])
+    song = current_app.config["db"].add_song_to_database(song)
+    current_app.config["db"].add_songs_to_playlist(int(key), [song.id])
+    return redirect(url_for("playlist_edit", key=key))
+
 
 def add_comment(key):
     comment = Comment(request.form['content'], request.form['author'])
@@ -83,6 +98,29 @@ def search():
         results = []
         results.append(ans)
         results.append(b)
+        response["results"] = results
+
+    return response
+
+
+def search_song():
+    response = {}
+
+    # do search, set status accordingly
+    status = True
+    response["status"] = status
+
+    s1 = Song(f"Given title {request.form['query']}", "some artist", "album", 111)
+    s2 = Song("Midnight", "Lianne La Havas", "Live at Sofar", 290)
+
+    s1.s_id(12)
+    s2.s_id(44)
+
+    if status:
+        # fill up result array
+        results = []
+        results.append(s1.to_dict())
+        results.append(s2.to_dict())
         response["results"] = results
 
     return response

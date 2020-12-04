@@ -22,6 +22,7 @@
         <table class="table" style="color: inherit">
             <thead>
                 <tr>
+                    <td></td>
                     <td>Song</td>
                     <td>Artist</td>
                     <td>Album</td>
@@ -30,9 +31,10 @@
                 </tr>
             </thead>
             <tbody>
+            <form action="{{url_for('remove_song', key=playlist.id)}}" method="POST">
             {% for song in playlist %}
                 <tr>
-                    <td><a href="{{url_for('remove_song', key=song.id)}}">Delete</a></td>
+                    <td><input type="checkbox" name="{{song['id']}}" value="{{song['id']}}">Delete</td>
                     <td>{{ song["title"] }}</td>
                     <td>{{ song["artist"] }}</td>
                     <td>{{ song["album"] }}</td>
@@ -42,14 +44,24 @@
                     {% endif %}
                 </tr>
             {% endfor %}
+            <button> Submit deletions</button>
+            </form>
+        </tbody>
+        </table>
+
+        <table class="table">
             <tr>
-                <td>Add</td>
-                <td>Artist</td>
-                <td>Album</td>
-                <td>Duration</td>
-                <td>Comments</td>
+                <form method="POST" action="{{url_for('add_song', key=playlist.id)}}">
+                <td><button id="add_song">Add</button></td>
+                <td><input id="new_song" type="text" name="new_song" placeholder="Song title"></td>
+                <td><input id="new_artist" type="text" name="new_artist" placeholder="Artist"></td>
+                <td><input id="new_album" type="text" name="new_album" placeholder="Album"></td>
+                <td><input id="new_duration" type="text" name="new_duration" placeholder="Duration"></td>
+                </form>
             </tr>
-            </tbody>
+            <tr>
+                <ul class="list-group" id="song-search-results"></ul>
+            </tr>
         </table>
         {% if playlist.page.commenting %}
         <table class="table" style="color: inherit">
@@ -71,4 +83,54 @@
         </table>
         {% endif %}
     </div>
+{% endblock %}
+{% block script %}
+<script type="text/javascript">
+    let songsearch = document.querySelector('#new_song');
+    let songresults = document.querySelector('#song-search-results');
+
+    songresults.style.color = "black"; 
+
+    songsearch.addEventListener('input', (el) => {
+      if (songsearch.value.length > MIN_SEARCH_LENGTH){
+        let xhttp = new XMLHttpRequest(); 
+          xhttp.onreadystatechange = function() {
+              if (this.readyState == 4 && this.status == 200) {
+                  songresults.innerHTML = "";
+                  let res = JSON.parse(this.responseText);
+                  console.log(res);
+                  if(res.status){
+                    for(const attr of res.results){
+                      let node = document.createElement('LI');
+                      node.innerText = songToText(attr);
+                      node.classList.add('list-group-item');
+                      node.addEventListener('click', (el) => {
+                        fillInputBoxes(attr);
+                        songresults.innerText = "";
+                      })
+                      songresults.appendChild(node);
+                    }
+                  }
+             }
+          };
+        xhttp.open("POST", "/search-song", true);
+        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xhttp.send("query=" + songsearch.value);
+      } else {
+        songresults.innerHTML = "";
+      }
+    })
+
+    let songToText = (attr) => {
+        return attr["title"] + ", by " + attr["artist"] + ", from " + attr["album"];
+    }
+
+    let fillInputBoxes = (attr) => {
+        document.querySelector("#new_song").value = attr["title"];
+        document.querySelector("#new_artist").value = attr["artist"];
+        document.querySelector("#new_duration").value = attr["duration"];
+        document.querySelector("#new_album").value = attr["album"];
+    }
+
+</script>
 {% endblock %}

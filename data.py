@@ -218,3 +218,4 @@ class corePlaylist:
         self.id = p_id
         self.title = title
         self.creator = creator
+        self.creator_id = 0

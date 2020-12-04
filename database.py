@@ -22,7 +22,6 @@ songs[9] = Song("Like Someone in Love", "Bill Evans", None, None)
 for key in songs:
     songs[key].s_id(key)
 
-
 playlists = {}
 
 playlists[1] = Playlist("gece", "arif")
@@ -57,7 +56,7 @@ class Database(object):
         self.playlists = playlists
         self.songs = songs
         self.plmap = plmap
-        self.song_id = 0
+        self.song_id = 10
         self.playlist_id = 0
 
     def get_playlist(self, key):
@@ -125,20 +124,20 @@ class Database(object):
         Adds the songs given (as ids) to the playlist given (as key).
         Returns the updated playlist.
         '''
-        if key in playlist:
+        if key in playlists:
             for song_id in songs:
-                pass
+                plmap[key].append(song_id)
                 # update plmap
         return self.get_playlist(key)
 
-    def remove_songs_to_playlist(self, key, songs):
+    def remove_songs_from_playlist(self, key, songs):
         '''
         Removes the songs given (as ids) from the playlist given (as key).
         Returns the updated playlist.
         '''
-        if key in playlist:
+        if key in playlists:
             for song_id in songs:
-                pass
+                plmap[key].remove(int(song_id))
                 # remove song_id from plmap
         return self.get_playlist(key)
 
@@ -155,10 +154,12 @@ class Database(object):
         '''
         Adds a given song object to the database
         '''
-        song.s_id(None)
+        song.s_id(self.song_id)
+        self.song_id += 1
+        songs[song.id] = song
         # add song to songs database
-        db_id = 5 # get the id back
-        song.s_id(db_id)
+#        db_id = 5 # get the id back
+#        song.s_id(db_id)
         return song
 
     def get_song(self, song_id):

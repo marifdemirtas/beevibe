@@ -26,12 +26,14 @@ def create_app():
     app.add_url_rule('/add', endpoint='playlist_add', methods=['GET', 'POST'], view_func=views.playlist_add)
     app.add_url_rule('/export/<key>', endpoint='export', view_func=views.export)
     app.add_url_rule('/search', endpoint='search', methods=["POST"], view_func=views.search)
+    app.add_url_rule('/search-song', endpoint='search_song', methods=["POST"], view_func=views.search_song)
     app.add_url_rule('/add_comment/<key>', endpoint='add_comment', methods=["POST"], view_func=views.add_comment)
     app.add_url_rule('/login', endpoint='login', methods=["GET", "POST"], view_func=views.login)
     app.add_url_rule('/logout', endpoint='logout', view_func=views.logout)
     app.add_url_rule('/playlist/<key>/edit', endpoint='playlist_edit', methods=['GET', 'POST'], view_func=views.playlist_edit)
     app.add_url_rule('/delete_comment/<key>', view_func=views.delete_comment)
-    app.add_url_rule('/remove_song/<key>', view_func=views.remove_song)
+    app.add_url_rule('/remove_song/<key>', methods=['POST'], view_func=views.remove_song)
+    app.add_url_rule('/add_song/<key>', methods=['POST'], view_func=views.add_song)
 
     lm.init_app(app)
     lm.login_view = "login"

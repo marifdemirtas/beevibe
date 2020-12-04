@@ -4,7 +4,7 @@
     <div class="container-md text-center playlist-container">
         <form action="" method="POST">
         <h1><input type="text" name="playlist_title" placeholder="What will you call your playlist?"></h1>   
-        <h2><input type="text" name="playlist_creator" placeholder="Created by: "></h2>
+        <h2>Created by {{current_user.username}}</h2>
         <p><input type="text" name="playlist_descr" placeholder="Enter an optional description"></p>
         <p name="color_descr">Choose color: <input type="color" name="playlist_color"></p>
         <button class="btn btn-warning">Submit</button>
@@ -16,11 +16,12 @@
     let container = document.querySelector('.playlist-container');
     let color_input = document.getElementsByName('playlist_color')[0];
     let color_descr = document.getElementsByName('color_descr')[0];
+
     color_input.addEventListener('input', () => {
         container.style.backgroundColor = color_input.value;
-        color_descr.style.color = ComputeTextColor(color_input.value)
+        document.body.style.color = ComputeTextColor(color_input.value)
     });
-    console.log(color_input.value);
+
     ComputeTextColor = (backgroundColor) => {
         //from data
         let r_norm = parseInt('0x' + backgroundColor.slice(1,3)) / 255;
@@ -34,5 +35,9 @@
         text_luma = (1 / 7) * (luminance - 0.3)
         return text_luma > 0.04 ? '#303133' : '#ffffff'
     }
+
+    color_input.value = container.style.backgroundColor;
+    document.body.style.color = ComputeTextColor(color_input.value);
+
 </script>
 {% endblock %}
