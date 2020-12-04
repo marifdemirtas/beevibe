@@ -97,6 +97,9 @@ class Playlist(object):
     def add_comment(self, comment):
         self.comments.append(comment)
 
+    def delete_comment(self, comment_id):
+        self.comments.pop(comment_id)
+
     def s_id(self, p_id=None):
         if p_id is not None:
             self.id = p_id
@@ -186,7 +189,7 @@ class Comment:
         else:
             self.date = datetime.datetime.now()
 
-    def s_id(c_id):
+    def s_id(self, c_id):
         self.id = c_id
 
 class Metadata:

@@ -64,23 +64,27 @@
             </tr>
         </table>
         {% if playlist.page.commenting %}
-        <table class="table" style="color: inherit">
-            {% if playlist.comments|length > 0 %}
-            <thead>
-                <td>Author</td>
-                <td>Comment</td>
-                <td>Date</td>
-            </thead>
-            {% endif %}
-            {% for comment in playlist.comments %}
-            <tr>
-                <td>{{comment.author}}</td>
-                <td>{{comment.content}}</td>
-                <td>{{comment.date}}</td>
-                <td><a href="url_for('delete_comment', key=comment.id)">Delete</a></td>
-            </tr>
-            {% endfor%}
-        </table>
+        <form action="{{url_for('delete_comment', key=playlist.id)}}" method="POST">
+            <table class="table" style="color: inherit">
+                {% if playlist.comments|length > 0 %}
+                <thead>
+                    <td>Delete</td>
+                    <td>Author</td>
+                    <td>Comment</td>
+                    <td>Date</td>
+                </thead>
+                {% endif %}
+                {% for comment in playlist.comments %}
+                <tr>
+                    <td><input type="checkbox" name="{{comment.id}}" value="{{comment.id}}">Delete</td>
+                    <td>{{comment.author}}</td>
+                    <td>{{comment.content}}</td>
+                    <td>{{comment.date}}</td>
+                </tr>
+                {% endfor%}
+            </table>
+            <button>Submit</button>
+        </form>
         {% endif %}
     </div>
 {% endblock %}

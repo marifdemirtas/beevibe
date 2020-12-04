@@ -41,6 +41,9 @@ playlists[2].page.set_commenting(False)
 playlists[3].page.set_commenting(True)
 playlists[3].comments = [Comment("I loved it", "jeff"), Comment("Didn't liked it that much", "nick")]
 
+playlists[3].comments[1].s_id(1)
+playlists[3].comments[0].s_id(0)
+
 for key in playlists:
     playlists[key].s_id(key)
 
@@ -149,6 +152,14 @@ class Database(object):
         # update playlist-comment mapping
         return self.playlists[key]
 
+    def remove_comments_from_playlist(self, key, comment_id):
+        '''
+        Adds a comment by an user to the database
+        '''
+        for comment in comment_id:
+            self.playlists[key].delete_comment(comment)
+        # update playlist-comment mapping
+        return self.playlists[key]
 
     def add_song_to_database(self, song):
         '''

@@ -31,7 +31,7 @@ def create_app():
     app.add_url_rule('/login', endpoint='login', methods=["GET", "POST"], view_func=views.login)
     app.add_url_rule('/logout', endpoint='logout', view_func=views.logout)
     app.add_url_rule('/playlist/<key>/edit', endpoint='playlist_edit', methods=['GET', 'POST'], view_func=views.playlist_edit)
-    app.add_url_rule('/delete_comment/<key>', view_func=views.delete_comment)
+    app.add_url_rule('/delete_comment/<key>', methods=['POST'], view_func=views.delete_comment)
     app.add_url_rule('/remove_song/<key>', methods=['POST'], view_func=views.remove_song)
     app.add_url_rule('/add_song/<key>', methods=['POST'], view_func=views.add_song)
 

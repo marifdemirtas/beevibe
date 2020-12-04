@@ -58,13 +58,16 @@ def playlist_edit(key):
 
 
 def delete_comment(key):
-    pass
+    comment_ids = request.form.keys()
+    comments = [int(cid) for cid in comment_ids]
+    current_app.config["db"].remove_comments_from_playlist(int(key), comments)
+    return redirect(url_for("playlist_edit", key=key))
+
 
 
 def remove_song(key):
     song_ids = request.form.keys()
     songs = [int(sid) for sid in song_ids]
-    print(f"Songs to be removed are: {songs}")
     current_app.config["db"].remove_songs_from_playlist(int(key), songs)
     return redirect(url_for("playlist_edit", key=key))
 
