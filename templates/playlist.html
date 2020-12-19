@@ -43,7 +43,7 @@
             {% endfor %}
             </tbody>
         </table>
-        {% if current_user.is_authenticated %}
+        {% if current_user.username == playlist.creator %}
         <a href="{{url_for('playlist_edit', key=playlist.id)}}" class="btn btn-info">Edit</a>
         {% endif %}
         {% if playlist.page.commenting and current_user.is_authenticated%}

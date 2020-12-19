@@ -24,9 +24,9 @@ for key in songs:
 
 playlists = {}
 
-playlists[1] = Playlist("gece", "arif")
-playlists[2] = Playlist("doğum", "mehmet")
-playlists[3] = Playlist("köprü", "demirtaş")
+playlists[1] = Playlist("gece", "ali")
+playlists[2] = Playlist("doğum", "ali")
+playlists[3] = Playlist("köprü", "ayşe")
 
 playlists[1].metadata.set_descr("This is about the night")
 playlists[2].metadata.set_descr("Best played at sunrise")
@@ -208,5 +208,18 @@ class Database(object):
             featured.append(fpl)
         return [playlists[1], playlists[2], playlists[3]]
 
+    def get_playlists_by(self, user):
+        res_playlists = []
+        #SELECT * FROM playlists WHERE creator_id = (SELECT user_id FROM users WHERE username=user.name)
+        for pl in playlists:
+            if playlists[pl].creator == user.username:
+                res_playlists.append(playlists[pl])
+        return res_playlists
+
+
     def get_user_tuple(self, user_id):
         return users.get(user_id)
+
+    def register_user(self, user):
+        users[user.username] = (user.id, user.email, user.username, user.password)
+        return user

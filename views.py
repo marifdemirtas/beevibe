@@ -18,6 +18,10 @@ def featured():
     featured = current_app.config["db"].get_featured_playlists()
     return render_template("list-playlist.html", playlists=featured)
 
+def profile():
+    playlists = current_app.config["db"].get_playlists_by(current_user)
+    return render_template("list-playlist.html", playlists=playlists)
+
 
 def playlist(key):
     playlist = current_app.config["db"].get_playlist(int(key))
@@ -146,3 +150,18 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for("index"))
+
+
+def register():
+    if request.method == "GET":
+        return render_template('register.html')
+    else:
+        user = get_user(request.form['username'])
+        #check by email
+        if user is None:
+            user = User(5, request.form['email'], request.form['username'], request.form['password'])
+            user = current_app.config['db'].register_user(user)
+            login_user(user)
+            next_page = request.args.get("next", url_for("index"))
+            return redirect(next_page)
+        return render_template('register.html')

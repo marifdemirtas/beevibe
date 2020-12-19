@@ -46,3 +46,19 @@ body{
 h1{
     color:blue;
 }
+
+
+.login-box{
+    margin: 1em auto;
+}
+
+.btn-login{
+    margin: 1em auto;
+}
+
+.page-container{
+    margin-top:3em;
+    background-color: white;
+    border-radius: 3px;
+    border:2px solid black;
+}
