@@ -22,6 +22,8 @@ def featured():
 def playlist(key):
     playlist = current_app.config["db"].get_playlist(int(key))
     # validate
+    if playlist is None:
+        playlist = current_app.config["db"].get_playlist(key)
     print(playlist.songs)
     return render_template("playlist.html", playlist=playlist)
 

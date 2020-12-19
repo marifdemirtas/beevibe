@@ -46,7 +46,7 @@
         {% if current_user.is_authenticated %}
         <a href="{{url_for('playlist_edit', key=playlist.id)}}" class="btn btn-info">Edit</a>
         {% endif %}
-        {% if playlist.page.commenting %}
+        {% if playlist.page.commenting and current_user.is_authenticated%}
         <table class="table" style="color: inherit">
             {% if playlist.comments|length > 0 %}
             <thead>

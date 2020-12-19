@@ -148,12 +148,17 @@ class PlaylistPage:
     Stores the settings related to the page that will display the playlist
     '''
 
-    def __init__(self, color=None, commenting=False):
+    def __init__(self, color=None, commenting=False, password=None):
         self.set_color(color) # 7 character hex string: #RRGGBB
         self.set_commenting(commenting)
+        if password != None:
+            self.set_password(password)
 
     def set_commenting(self, commenting):
         self.commenting = commenting
+
+    def set_password(self, password):
+        self.password = password
 
     def set_color(self, color):
         '''

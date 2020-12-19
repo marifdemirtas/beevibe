@@ -2,8 +2,8 @@ from data import *
 import random
 
 users = {
-    '1': "abc",
-    '2': "def"
+    'ali': (1, "ali@gmail.com", "ali", "HASHali"),
+    'ayşe': (2, "ayse@gmail.com", "ayşe", "HASHayse")
 }
 
 songs = {}
@@ -208,5 +208,5 @@ class Database(object):
             featured.append(fpl)
         return [playlists[1], playlists[2], playlists[3]]
 
-    def get_user_password(self, user_id):
+    def get_user_tuple(self, user_id):
         return users.get(user_id)
