@@ -1,5 +1,6 @@
 from data import *
 import random
+import datetime
 
 users = {
     'ali': (1, "ali@gmail.com", "ali", "HASHali"),
@@ -44,6 +45,9 @@ playlists[3].comments = [Comment("I loved it", "jeff"), Comment("Didn't liked it
 playlists[3].comments[1].s_id(1)
 playlists[3].comments[0].s_id(0)
 
+#playlists[3].page.expiration = datetime.datetime(2019, 1, 1)
+playlists[3].page.password = "HASHASH"
+
 for key in playlists:
     playlists[key].s_id(key)
 
@@ -70,6 +74,9 @@ class Database(object):
         if playlist is None:
             return playlist
         else:
+            if playlist.page.expiration is not None and playlist.page.expiration < datetime.datetime.now():
+                #remove playlist
+                return None
             playlist = playlist.copy()
             for song_id in self.plmap[key]:
                 playlist.add(self.get_song(song_id))
@@ -194,7 +201,10 @@ class Database(object):
         Returns a randomly selected playlist from featured ones
         '''
         # get a random key from featured playlists
-        return self.get_playlist(random.choice([1,2,3]))
+        playlist = self.get_playlist(random.choice([1,2,3]))
+        while playlist is None:
+            playlist = self.get_playlist(random.choice([1,2,3]))
+        return playlist
 
     def get_featured_playlists(self, n=15):
         '''

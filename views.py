@@ -27,9 +27,23 @@ def playlist(key):
     playlist = current_app.config["db"].get_playlist(int(key))
     # validate
     if playlist is None:
-        playlist = current_app.config["db"].get_playlist(key)
-    print(playlist.songs)
+        return abort(404)
+    #    playlist = current_app.config["db"].get_playlist(key)
+    print(playlist.page.password is not None)
+    if playlist.page.password is not None:
+        return redirect(url_for("get_password_for", key=key))
     return render_template("playlist.html", playlist=playlist)
+
+
+def get_password_for(key):
+    if request.method == "GET":
+        return render_template("password-enter.html", status=True)
+    else:
+        playlist = current_app.config["db"].get_playlist(int(key))
+        if request.form["password"] == playlist.page.password:
+            return render_template("playlist.html", playlist=playlist)
+        else:
+            return render_template("password-enter.html", status=False)
 
 
 def export(key):
@@ -86,8 +100,9 @@ def add_song(key):
     return redirect(url_for("playlist_edit", key=key))
 
 
+@login_required
 def add_comment(key):
-    comment = Comment(request.form['content'], request.form['author'])
+    comment = Comment(request.form['content'], current_user.username)
     current_app.config["db"].add_comment_to_playlist(int(key), comment)
     return redirect(url_for("playlist", key=key))
 

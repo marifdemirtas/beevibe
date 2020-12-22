@@ -46,7 +46,7 @@
         {% if current_user.username == playlist.creator %}
         <a href="{{url_for('playlist_edit', key=playlist.id)}}" class="btn btn-info">Edit</a>
         {% endif %}
-        {% if playlist.page.commenting and current_user.is_authenticated%}
+        {% if playlist.page.commenting%}
         <table class="table" style="color: inherit">
             {% if playlist.comments|length > 0 %}
             <thead>
@@ -62,13 +62,15 @@
                 <td>{{comment.date}}</td>
             </tr>
             {% endfor%}
+            {% if current_user.is_authenticated %}
             <tr>
                 <form class="form-control" method="POST" action="{{url_for('add_comment', key=playlist.id)}}">
-                <td><input type="text" name="author">Enter a nickname: </input></td>
+                <td>{{current_user.username}}: </td>
                 <td><input type="text" name="content">What do you think? </input></td>
                 <td><button class="btn-success">Submit</button></td>
                 </form>
             </tr>
+            {% endif %}
         </table>
         {% endif %}
         <a href="{{url_for('export', key=playlist.id)}}"><button class="btn btn-lg btn-success">Export</button></a>
