@@ -2,6 +2,8 @@ from data import *
 import random
 import datetime
 
+import psycopg2 as psql
+
 users = {
     'ali': (1, "ali@gmail.com", "ali", "HASHali"),
     'ayşe': (2, "ayse@gmail.com", "ayşe", "HASHayse")
@@ -60,6 +62,7 @@ plmap[3] = [9, 7, 8, 0, 4]
 class Database(object):
 
     def __init__(self):
+        self.conn = psql.connect(database="test", user="marif")
         self.playlists = playlists
         self.songs = songs
         self.plmap = plmap
@@ -227,9 +230,19 @@ class Database(object):
         return res_playlists
 
 
-    def get_user_tuple(self, user_id):
-        return users.get(user_id)
+    def get_user_tuple(self, username):
+        '''
+        Returns the user with given username
+        '''
+        with self.conn.cursor() as curr:
+            curr.execute(f"SELECT * FROM users WHERE nickname=%s", (username,))
+            return curr.fetchone()
+
 
     def register_user(self, user):
-        users[user.username] = (user.id, user.email, user.username, user.password)
+        with self.conn.cursor() as curr:
+            curr.execute(f"INSERT INTO users (nickname, email, password) VALUES (%s,%s,%s)", (user.username, user.email, user.password))
+            curr.execute(f"SELECT user_id FROM users WHERE nickname=%s", (user.username,))
+            user.id = curr.fetchone()[0]
+            self.conn.commit()
         return user

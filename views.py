@@ -3,6 +3,7 @@ from user import get_user, User
 from data import *
 import json
 from flask_login import current_user, login_user, logout_user, login_required
+from hashlib import sha256
 
 def index():
     playlist = current_app.config["db"].get_featured_playlist()
@@ -155,7 +156,7 @@ def login():
         return render_template('login.html')
     else:
         user = get_user(request.form['username'])
-        if request.form['password'] == user.password:
+        if user is not None and sha256(request.form['password'].encode('utf-8')).hexdigest() == user.password:
             login_user(user)
             next_page = request.args.get("next", url_for("index"))
             return redirect(next_page)
@@ -174,7 +175,7 @@ def register():
         user = get_user(request.form['username'])
         #check by email
         if user is None:
-            user = User(5, request.form['email'], request.form['username'], request.form['password'])
+            user = User(5, request.form['email'], request.form['username'], sha256(request.form['password'].encode('utf-8')).hexdigest())
             user = current_app.config['db'].register_user(user)
             login_user(user)
             next_page = request.args.get("next", url_for("index"))
