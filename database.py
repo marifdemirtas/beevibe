@@ -235,14 +235,14 @@ class Database(object):
         Returns the user with given username
         '''
         with self.conn.cursor() as curr:
-            curr.execute(f"SELECT * FROM users WHERE nickname=%s", (username,))
+            curr.execute("SELECT * FROM users WHERE nickname=%s", (username,))
             return curr.fetchone()
 
 
     def register_user(self, user):
         with self.conn.cursor() as curr:
-            curr.execute(f"INSERT INTO users (nickname, email, password) VALUES (%s,%s,%s)", (user.username, user.email, user.password))
-            curr.execute(f"SELECT user_id FROM users WHERE nickname=%s", (user.username,))
+            curr.execute("INSERT INTO users (nickname, email, password) VALUES (%s,%s,%s)", (user.username, user.email, user.password))
+            curr.execute("SELECT user_id FROM users WHERE nickname=%s", (user.username,))
             user.id = curr.fetchone()[0]
             self.conn.commit()
         return user
