@@ -227,28 +227,9 @@ class Database(object):
         return res_playlists
 
 
-<<<<<<< HEAD
     def get_user_tuple(self, user_id):
         return users.get(user_id)
 
     def register_user(self, user):
         users[user.username] = (user.id, user.email, user.username, user.password)
         return user
-=======
-    def get_user_tuple(self, username):
-        '''
-        Returns the user with given username
-        '''
-        with self.conn.cursor() as curr:
-            curr.execute("SELECT * FROM users WHERE nickname=%s", (username,))
-            return curr.fetchone()
-
-
-    def register_user(self, user):
-        with self.conn.cursor() as curr:
-            curr.execute("INSERT INTO users (nickname, email, password) VALUES (%s,%s,%s)", (user.username, user.email, user.password))
-            curr.execute("SELECT user_id FROM users WHERE nickname=%s", (user.username,))
-            user.id = curr.fetchone()[0]
-            self.conn.commit()
-        return user
->>>>>>> 47ec3c0... Initial files for heroku deployment
