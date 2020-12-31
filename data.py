@@ -206,7 +206,7 @@ class Metadata:
     '''
 
     def __init__(self, descr=None, image=None):
-        self.image = image
+        self.thumbnail = image
         self.descr = descr
         self.status = False
         if descr or image:

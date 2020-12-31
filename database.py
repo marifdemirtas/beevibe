@@ -73,27 +73,62 @@ class Database(object):
         '''
         Fetches the playlist with given key, returns Playlist object
         '''
-        playlist = self.playlists.get(key)
-        if playlist is None:
-            return playlist
-        else:
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT * FROM playlists WHERE playlist_id=%s", (key,))
+            res = curr.fetchone()
+            if res == None:
+                playlist = None
+            else:
+                curr.execute("SELECT nickname FROM users WHERE user_id=%s", (res[-1],))
+                creator = curr.fetchone()[0]
+                print(creator)
+                p_id, title, descr, color, commenting, privacy, expire_date, thumbnail, _ = res
+                playlist = Playlist(title, creator, descr)
+                playlist.page.set_color(color)
+                playlist.page.set_commenting(commenting)
+                playlist.page.set_password(privacy)
+                playlist.page.set_expiration(expire_date)
+                playlist.metadata.set_thumbnail(thumbnail)
+                playlist.s_id(p_id)
+
+
+        if playlist != None:
             if playlist.page.expiration is not None and playlist.page.expiration < datetime.datetime.now():
-                #remove playlist
-                return None
-            playlist = playlist.copy()
-            for song_id in self.plmap[key]:
-                playlist.add(self.get_song(song_id))
+                self.remove_playlist(playlist.id)
+                playlist = None
+            else:
+                with self.conn.cursor() as curr:
+                    curr.execute('''SELECT songs.song_id, songs.title, songs.artist, songs.album, songs.duration, spmap.song_description
+                                    FROM (spmap INNER JOIN songs ON songs.song_id = spmap.song_id)
+                                    WHERE spmap.playlist_id=%s;''', (playlist.id,))
+                    songs = curr.fetchall()
+                    for song_t in songs:
+                        song = Song(*song_t[1:-1])
+                        song.s_id(song_t[0])
+                        playlist.add(song, song_t[-1])
         return playlist
+
+    def remove_playlist(self, key):
+        with self.conn.cursor() as curr:
+            curr.execute("DELETE FROM playlists WHERE playlist_id=%s", (key,))
+            self.conn.commit()
 
     def add_playlist(self, playlist):
         '''
         Adds the given playlist to the db
         '''
-        playlist.s_id(5)
-        self.playlists[5] = playlist
-        self.plmap[5] = []
-        # update mappings, create id etc.
-        # return updated playlist
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT user_id FROM users WHERE nickname=%s", (playlist.creator,))
+            creator_id = curr.fetchone()[0]
+            curr.execute('''INSERT INTO playlists (title, description, color, commenting, privacy, expire_date, thumbnail, creator_id)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                            RETURNING playlist_id''',
+                            (playlist.title, playlist.metadata.descr, playlist.page.color, playlist.page.commenting, playlist.page.password, playlist.page.expiration, playlist.metadata.thumbnail, creator_id));
+            playlist.s_id(curr.fetchone()[0])
+            for song_id in playlist.songs:
+                curr.execute('''INSERT INTO spmap (song_id, playlist_id, song_description) VALUES
+                            (%s, %s, %s)''', (song_id, playlist.id, playlist.song_descr[song_id]))
+            self.conn.commit()
         return playlist
 
     def search_playlists_by_title(self, title):
@@ -137,10 +172,11 @@ class Database(object):
         Adds the songs given (as ids) to the playlist given (as key).
         Returns the updated playlist.
         '''
-        if key in playlists:
+        with self.conn.cursor() as curr:
             for song_id in songs:
-                plmap[key].append(song_id)
-                # update plmap
+                curr.execute('''INSERT INTO spmap (playlist_id, song_id) VALUES
+                                (%s, %s)''', (key, song_id))
+            self.conn.commit()
         return self.get_playlist(key)
 
     def remove_songs_from_playlist(self, key, songs):
@@ -175,12 +211,12 @@ class Database(object):
         '''
         Adds a given song object to the database
         '''
-        song.s_id(self.song_id)
-        self.song_id += 1
-        songs[song.id] = song
-        # add song to songs database
-#        db_id = 5 # get the id back
-#        song.s_id(db_id)
+        with self.conn.cursor() as curr:
+            curr.execute('''INSERT INTO songs (title, artist, album, duration) VALUES
+                            (%s, %s, %s, %s) RETURNING song_id''',
+                            (song.title, song.artist, song.album, song.duration))
+            song.s_id(curr.fetchone()[0])
+            self.conn.commit()
         return song
 
     def get_song(self, song_id):

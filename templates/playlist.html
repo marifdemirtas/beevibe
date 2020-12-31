@@ -36,8 +36,10 @@
                     <td>{{ song["artist"] }}</td>
                     <td>{{ song["album"] }}</td>
                     <td>{{ song["duration"] }}</td>
-                    {% if song["id"] in playlist.song_descr %}
+                    {% if playlist.song_descr[song["id"]] %}
                     <td>{{playlist.song_descr[song["id"]]}}</td>
+                    {% else %}
+                    <td></td>
                     {% endif %}
                 </tr>
             {% endfor %}

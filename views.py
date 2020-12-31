@@ -148,7 +148,10 @@ def search_song():
         results.append(s2.to_dict())
         response["results"] = results
 
-    return response
+    encoded_obj = json.dumps(response, ensure_ascii=False).encode('utf8')
+    return Response(encoded_obj,
+                    mimetype="application/json",
+                    headers={'charset': 'utf-8'})
 
 
 def login():
