@@ -230,3 +230,11 @@ class corePlaylist:
         self.title = title
         self.creator = creator
         self.creator_id = 0
+
+    def to_dict(self):
+        song = {
+            "id": self.id,
+            "title": self.title,
+            "creator": self.creator
+        }
+        return song

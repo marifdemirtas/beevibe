@@ -19,10 +19,14 @@ def featured():
     featured = current_app.config["db"].get_featured_playlists()
     return render_template("list-playlist.html", playlists=featured)
 
+@login_required
 def profile():
     playlists = current_app.config["db"].get_playlists_by(current_user)
     return render_template("list-playlist.html", playlists=playlists)
 
+def public_profile(key):
+    playlists = current_app.config["db"].get_playlists_using_id(int(key))
+    return render_template("list-playlist.html", playlists=playlists)
 
 def playlist(key):
     playlist = current_app.config["db"].get_playlist(int(key))
@@ -115,17 +119,15 @@ def search():
     status = True
     response["status"] = status
 
-    ans = f"Result related to {request.form['query']})"
-    b = f"Another result about {request.form['query']}"
-
     if status:
         # fill up result array
-        results = []
-        results.append(ans)
-        results.append(b)
-        response["results"] = results
+        results = current_app.config['db'].search_playlists_by_title(request.form['query'])
+        response["results"] = [f"{res.title}, by {res.creator}" for res in results]
 
-    return response
+    encoded_obj = json.dumps(response, ensure_ascii=False).encode('utf8')
+    return Response(encoded_obj,
+                    mimetype="application/json",
+                    headers={'charset': 'utf-8'})
 
 
 def search_song():
@@ -135,18 +137,11 @@ def search_song():
     status = True
     response["status"] = status
 
-    s1 = Song(f"Given title {request.form['query']}", "some artist", "album", 111)
-    s2 = Song("Midnight", "Lianne La Havas", "Live at Sofar", 290)
-
-    s1.s_id(12)
-    s2.s_id(44)
 
     if status:
         # fill up result array
-        results = []
-        results.append(s1.to_dict())
-        results.append(s2.to_dict())
-        response["results"] = results
+        results = current_app.config['db'].search_song_by_title(request.form['query'])
+        response["results"] = [song.to_dict() for song in results]
 
     encoded_obj = json.dumps(response, ensure_ascii=False).encode('utf8')
     return Response(encoded_obj,
