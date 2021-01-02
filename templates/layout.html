@@ -30,6 +30,16 @@
         </form>
       </div>
     </nav>
+
+
+    {% with mailbox = get_flashed_messages() %}
+    {% if mailbox %}
+    <div><ul>{% for message in mailbox %}
+    <li>{{message}}</li>
+    {% endfor %}
+    </ul></div>
+    {% endif %}
+    {% endwith %}
     {% block content %}{% endblock %}
   </body>
   {% block script %}{% endblock %}

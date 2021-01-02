@@ -3,19 +3,39 @@
 {% block content %}
     <div class="container-md text-center playlist-container">
         <form action="" method="POST">
-        <h1><input type="text" name="playlist_title" placeholder="What will you call your playlist?"></h1>   
+            {{form.hidden_tag()}}
+        <h1>
+            {{form.title.label}}<br>
+            {{form.title(size=32)}}
+        </h1>{% for error in form.title.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {%endfor%}   
         <h2>Created by {{current_user.username}}</h2>
-        <p><input type="text" name="playlist_descr" placeholder="Enter an optional description"></p>
-        <p name="color_descr">Choose color: <input type="color" name="playlist_color"></p>
-        <button class="btn btn-warning">Submit</button>
+        <p>
+            {{form.descr.label}}<br>
+            {{form.descr()}}
+        {% for error in form.descr.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {%endfor%}</p>
+        <p id="color_descr">{{form.color.label}}
+        {{form.color}}{% for error in form.color.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {%endfor%}</p>
+        <p>
+            {{form.privacy.label}}<br>
+            {{form.privacy()}}{% for error in form.privacy.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {%endfor%}
+        </p>
+        <p>{{form.submit()}}</p>
        </form>
     </div>
 {% endblock %}
 {% block script %}
 <script type="text/javascript">
     let container = document.querySelector('.playlist-container');
-    let color_input = document.getElementsByName('playlist_color')[0];
-    let color_descr = document.getElementsByName('color_descr')[0];
+    let color_input = document.getElementById('playlist_color');
+    let color_descr = document.getElementById('color_descr')[0];
 
     color_input.addEventListener('input', () => {
         container.style.backgroundColor = color_input.value;

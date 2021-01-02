@@ -4,60 +4,6 @@ import datetime
 
 import psycopg2 as psql
 
-users = {
-    'ali': (1, "ali@gmail.com", "ali", "HASHali"),
-    'ayşe': (2, "ayse@gmail.com", "ayşe", "HASHayse")
-}
-
-songs = {}
-
-songs[0] = Song("Tütün Kâıt", "Ethnique Punch", "Sarhoş Baykuş", 228)
-songs[1] = Song("Midnight", "Lianne La Havas", "Live at Sofar", 290)
-songs[2] = Song("Bittersweet", "Lianne La Havas", "Lianne La Havas", 228)
-songs[3] = Song("Hallelujah", "Jeff Buckley", "Grace", None)
-songs[4] = Song("Dagenham Dream", "Blood Orange", "Negro Swan", 192)
-songs[5] = Song("Oi Va Voi", "Refugee", "Live at VPRO", 422)
-songs[6] = Song("Borderline", "Tame Impala", "The Slow Rush", 228)
-songs[7] = Song("The Sky is Crying", "Gary B.B. Coleman", None, 554)
-songs[8] = Song("No Surprises", "Radiohead", "OK Computer", None)
-songs[9] = Song("Like Someone in Love", "Bill Evans", None, None)
-
-for key in songs:
-    songs[key].s_id(key)
-
-playlists = {}
-
-playlists[1] = Playlist("gece", "ali")
-playlists[2] = Playlist("doğum", "ali")
-playlists[3] = Playlist("köprü", "ayşe")
-
-playlists[1].metadata.set_descr("This is about the night")
-playlists[2].metadata.set_descr("Best played at sunrise")
-
-playlists[1].page.set_color("#0a0022")
-#playlists[2].page.set_color("#af220a")
-playlists[2].page.set_color("#aaffff")
-playlists[3].page.set_color("#0f1088")
-
-playlists[1].page.set_commenting(True)
-playlists[2].page.set_commenting(False)
-playlists[3].page.set_commenting(True)
-playlists[3].comments = [Comment("I loved it", "jeff"), Comment("Didn't liked it that much", "nick")]
-
-playlists[3].comments[1].s_id(1)
-playlists[3].comments[0].s_id(0)
-
-#playlists[3].page.expiration = datetime.datetime(2019, 1, 1)
-playlists[3].page.password = "HASHASH"
-
-for key in playlists:
-    playlists[key].s_id(key)
-
-
-plmap = {} #playlist song map - playlist_id: song_id
-plmap[1] = [1, 6, 8, 5]
-plmap[2] = [2, 4, 5, 6]
-plmap[3] = [9, 7, 8, 0, 4]
 
 '''
 TODO
@@ -67,23 +13,27 @@ song operations
 '''
 
 
+class DuplicateError(Exception):
+    def __init__(self):
+        super(DuplicateError, self).__init__()
+
 def handle_db_exception(f):
     def wrap(*args, **kwargs):
+        print("HERE")
         try:
             return f(*args, **kwargs)
         except Exception as e:
             args[0].conn.rollback()
-    return wrap
+            if isinstance(e, psql.errors.UniqueViolation):
+                raise DuplicateError()
+            #return None
+ #   return wrap
+    return f
 
 class Database(object):
 
     def __init__(self):
         self.conn = psql.connect(database="test", user="marif")
-        self.playlists = playlists
-        self.songs = songs
-        self.plmap = plmap
-        self.song_id = 10
-        self.playlist_id = 0
 
     @handle_db_exception
     def get_playlist(self, key):
@@ -124,6 +74,15 @@ class Database(object):
                         song.s_id(song_t[0])
                         playlist.add(song, song_t[-1])
                     #populate with comments
+                    curr.execute('''SELECT comments.content, users.nickname, comments.publish_date
+                                    FROM ((comments INNER JOIN playlists ON comments.playlist_id = playlists.playlist_id)
+                                    INNER JOIN users ON comments.author_id = users.user_id)
+                                    WHERE playlists.playlist_id=%s;''', (playlist.id,))
+                    comments = curr.fetchall()
+                    print(comments)
+                    for comment_t in comments:
+                        comment = Comment(*comment_t)
+                        playlist.add_comment(comment)
         return playlist
 
     def remove_playlist(self, key):
@@ -203,6 +162,7 @@ class Database(object):
         # for diff_attr in (db_playlist, playlist)
         #    update database accordingly
 
+    @handle_db_exception
     def add_songs_to_playlist(self, key, songs):
         '''
         Adds the songs given (as ids) to the playlist given (as key).
@@ -253,31 +213,19 @@ class Database(object):
         Adds a given song object to the database
         '''
         with self.conn.cursor() as curr:
-            print(song.duration)
 #            if song.duration == '':
  #               song.duration = None
-            curr.execute('''INSERT INTO songs (title, artist, album, duration) VALUES
-                            (%s, %s, %s, %s) RETURNING song_id''',
-                            (song.title, song.artist, song.album, song.duration))
-            song.s_id(curr.fetchone()[0])
-            self.conn.commit()
+            curr.execute("SELECT song_id FROM songs WHERE title=%s AND artist=%s AND album=%s ", (song.title, song.artist, song.album))
+            song_id = curr.fetchone()
+            if not song_id:
+                curr.execute('''INSERT INTO songs (title, artist, album, duration) VALUES
+                                (%s, %s, %s, %s) RETURNING song_id''',
+                                (song.title, song.artist, song.album, song.duration))
+                song.s_id(curr.fetchone()[0])
+                self.conn.commit()
+            else:
+                song.s_id(song_id[0])
         return song
-
-    def get_song(self, song_id):
-        '''
-        Gets the song with the given id from the database
-        '''
-        song = self.songs.get(song_id)
-        if song is None:
-            return None
-        else:
-            return song.copy()
-
-    def del_song(self, song_id):
-        '''
-        Deletes the song with the given id from the database
-        '''
-        # remove song_id from songs
 
     def get_featured_playlist(self):
         '''
@@ -323,6 +271,14 @@ class Database(object):
         with self.conn.cursor() as curr:
             curr.execute("SELECT * FROM users WHERE nickname=%s", (username,))
             return curr.fetchone()
+
+    def get_username(self, user_id):
+        '''
+        Returns the user with given username
+        '''
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT nickname FROM users WHERE user_id=%s", (user_id,))
+            return curr.fetchone()[0]
 
 
     def register_user(self, user):
