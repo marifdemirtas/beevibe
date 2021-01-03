@@ -1,5 +1,13 @@
 {% extends "list-layout.html" %}
 {% block title %} - Featured Playlists {% endblock %}
 {% block explanation %}
+{% if profile %}
+    {% if profile == current_user.username%}
+    <p>Welcome to your profile, {{current_user.username}}.</p>
+    {% else %}
+    <p>This is a list of playlists by {{profile}}.</p>
+    {% endif %}
+{% else %}
 <p>This is a list of featured playlists.</p>
+{% endif %}
 {% endblock %}

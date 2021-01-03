@@ -2,95 +2,107 @@ from data import *
 import random
 import datetime
 
-users = {
-    'ali': (1, "ali@gmail.com", "ali", "HASHali"),
-    'ayşe': (2, "ayse@gmail.com", "ayşe", "HASHayse")
-}
-
-songs = {}
-
-songs[0] = Song("Tütün Kâıt", "Ethnique Punch", "Sarhoş Baykuş", 228)
-songs[1] = Song("Midnight", "Lianne La Havas", "Live at Sofar", 290)
-songs[2] = Song("Bittersweet", "Lianne La Havas", "Lianne La Havas", 228)
-songs[3] = Song("Hallelujah", "Jeff Buckley", "Grace", None)
-songs[4] = Song("Dagenham Dream", "Blood Orange", "Negro Swan", 192)
-songs[5] = Song("Oi Va Voi", "Refugee", "Live at VPRO", 422)
-songs[6] = Song("Borderline", "Tame Impala", "The Slow Rush", 228)
-songs[7] = Song("The Sky is Crying", "Gary B.B. Coleman", None, 554)
-songs[8] = Song("No Surprises", "Radiohead", "OK Computer", None)
-songs[9] = Song("Like Someone in Love", "Bill Evans", None, None)
-
-for key in songs:
-    songs[key].s_id(key)
-
-playlists = {}
-
-playlists[1] = Playlist("gece", "ali")
-playlists[2] = Playlist("doğum", "ali")
-playlists[3] = Playlist("köprü", "ayşe")
-
-playlists[1].metadata.set_descr("This is about the night")
-playlists[2].metadata.set_descr("Best played at sunrise")
-
-playlists[1].page.set_color("#0a0022")
-#playlists[2].page.set_color("#af220a")
-playlists[2].page.set_color("#aaffff")
-playlists[3].page.set_color("#0f1088")
-
-playlists[1].page.set_commenting(True)
-playlists[2].page.set_commenting(False)
-playlists[3].page.set_commenting(True)
-playlists[3].comments = [Comment("I loved it", "jeff"), Comment("Didn't liked it that much", "nick")]
-
-playlists[3].comments[1].s_id(1)
-playlists[3].comments[0].s_id(0)
-
-#playlists[3].page.expiration = datetime.datetime(2019, 1, 1)
-playlists[3].page.password = "HASHASH"
-
-for key in playlists:
-    playlists[key].s_id(key)
+import psycopg2 as psql
 
 
-plmap = {} #playlist song map - playlist_id: song_id
-plmap[1] = [1, 6, 8, 5]
-plmap[2] = [2, 4, 5, 6]
-plmap[3] = [9, 7, 8, 0, 4]
+'''
+TODO
+update playlist
+comment operations
+song operations
+'''
+
+
+class DuplicateError(Exception):
+    def __init__(self):
+        super(DuplicateError, self).__init__()
+
+def handle_db_exception(f):
+    def wrap(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except Exception as e:
+            args[0].conn.rollback()
+            if isinstance(e, psql.errors.UniqueViolation):
+                raise DuplicateError()
+            #return None
+ #   return wrap
+    return f
 
 class Database(object):
 
     def __init__(self):
-        self.playlists = playlists
-        self.songs = songs
-        self.plmap = plmap
-        self.song_id = 10
-        self.playlist_id = 0
+        self.conn = psql.connect(database="test", user="marif")
 
+    @handle_db_exception
     def get_playlist(self, key):
         '''
         Fetches the playlist with given key, returns Playlist object
         '''
-        playlist = self.playlists.get(key)
-        if playlist is None:
-            return playlist
-        else:
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT * FROM playlists WHERE playlist_id=%s", (key,))
+            res = curr.fetchone()
+            if res == None:
+                playlist = None
+            else:
+                curr.execute("SELECT nickname FROM users WHERE user_id=%s", (res[-1],))
+                creator = curr.fetchone()[0]
+                p_id, title, descr, color, commenting, privacy, expire_date, thumbnail, _ = res
+                playlist = Playlist(title, creator, descr)
+                playlist.page.set_color(color)
+                playlist.page.set_commenting(commenting)
+                playlist.page.set_password(privacy)
+                playlist.page.set_expiration(expire_date)
+                playlist.metadata.set_thumbnail(thumbnail)
+                playlist.s_id(p_id)
+
+
+        if playlist != None:
             if playlist.page.expiration is not None and playlist.page.expiration < datetime.datetime.now():
-                #remove playlist
-                return None
-            playlist = playlist.copy()
-            for song_id in self.plmap[key]:
-                playlist.add(self.get_song(song_id))
+                self.remove_playlist(playlist.id)
+                playlist = None
+            else:
+                with self.conn.cursor() as curr:
+                    curr.execute('''SELECT songs.song_id, songs.title, songs.artist, songs.album, songs.duration, spmap.song_description
+                                    FROM (spmap INNER JOIN songs ON songs.song_id = spmap.song_id)
+                                    WHERE spmap.playlist_id=%s;''', (playlist.id,))
+                    songs = curr.fetchall()
+                    for song_t in songs:
+                        song = Song(*song_t[1:-1])
+                        song.s_id(song_t[0])
+                        playlist.add(song, song_t[-1])
+                    #populate with comments
+                    curr.execute('''SELECT comments.content, users.nickname, comments.publish_date
+                                    FROM ((comments INNER JOIN playlists ON comments.playlist_id = playlists.playlist_id)
+                                    INNER JOIN users ON comments.author_id = users.user_id)
+                                    WHERE playlists.playlist_id=%s;''', (playlist.id,))
+                    comments = curr.fetchall()
+                    for comment_t in comments:
+                        comment = Comment(*comment_t)
+                        playlist.add_comment(comment)
         return playlist
+
+    def remove_playlist(self, key):
+        with self.conn.cursor() as curr:
+            curr.execute("DELETE FROM playlists WHERE playlist_id=%s", (key,))
+            self.conn.commit()
 
     def add_playlist(self, playlist):
         '''
         Adds the given playlist to the db
         '''
-        playlist.s_id(5)
-        self.playlists[5] = playlist
-        self.plmap[5] = []
-        # update mappings, create id etc.
-        # return updated playlist
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT user_id FROM users WHERE nickname=%s", (playlist.creator,))
+            creator_id = curr.fetchone()[0]
+            curr.execute('''INSERT INTO playlists (title, description, color, commenting, privacy, expire_date, thumbnail, creator_id)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                            RETURNING playlist_id''',
+                            (playlist.title, playlist.metadata.descr, playlist.page.color, playlist.page.commenting, playlist.page.password, playlist.page.expiration, playlist.metadata.thumbnail, creator_id));
+            playlist.s_id(curr.fetchone()[0])
+            for song_id in playlist.songs:
+                curr.execute('''INSERT INTO spmap (song_id, playlist_id, song_description) VALUES
+                            (%s, %s, %s)''', (song_id, playlist.id, playlist.song_descr[song_id]))
+            self.conn.commit()
         return playlist
 
     def search_playlists_by_title(self, title):
@@ -98,10 +110,24 @@ class Database(object):
         Returns the corePlaylist objects related with title.
         '''
         # search database for title and return the matching
-        # for playlist in query_results
+        # for playlist in query_results
         #   build corePlaylists
-        res = [corePlaylist(1, "gece", "arif")]
-        return res
+        with self.conn.cursor() as curr:
+            curr.execute('''SELECT playlists.playlist_id, playlists.title, users.nickname FROM playlists
+                            INNER JOIN users ON users.user_id=playlists.creator_id
+                            WHERE playlists.title LIKE %s''', (title + '%',))
+            return [corePlaylist(*row) for row in curr.fetchmany(5)]
+
+
+    def search_song_by_title(self, title):
+        ret_songs = []
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT * FROM songs WHERE title LIKE %s", (title + '%',))
+            for song in curr.fetchmany(5):
+                ret_songs.append(Song(*song[1:]))
+                ret_songs[-1].s_id(song[0])
+        return ret_songs
+
 
     def search_playlists_by_creator(self, creator):
         '''
@@ -110,34 +136,44 @@ class Database(object):
         # search database for title and return the matching
         # for playlist in query_results
         #   build corePlaylists
-        res = [corePlaylist(1, "gece", "arif")]
-        return res
+        with self.conn.cursor() as curr:
+            curr.execute('''SELECT playlists.playlist_id, playlists.title, users.nickname FROM playlists
+                            INNER JOIN users ON users.user_id=playlists.creator_id
+                            WHERE users.nickname LIKE %s''', (creator + '%',))
+            return [corePlaylist(*row) for row in curr.fetchmany(5)]
 
     def del_playlist(self, key):
         '''
         Deletes the playlist with given key.
         '''
-        if key in playlists:
-            del playlists[key] # cascade to other tables
+        with self.conn.cursor() as curr:
+            curr.execute("DELETE FROM playlists WHERE playlist_id=%s", (key,))
+
 
     def update_playlist(self, playlist):
         '''
         Given a playlist object, updates the one in database with the same key
         with the given object.
-        '''        
-        db_playlist = self.get_playlist(playlist.key)
-        # for diff_attr in (db_playlist, playlist)
-        #    update database accordingly
+        '''
+        with self.conn.cursor() as curr:
+            curr.execute('''UPDATE playlists SET
+                            color=%s,
+                            description=%s
+                            WHERE playlist_id=%s''',
+                         (playlist.page.color, playlist.metadata.descr, playlist.id))
+        return self.get_playlist(playlist.id)
 
+    @handle_db_exception
     def add_songs_to_playlist(self, key, songs):
         '''
         Adds the songs given (as ids) to the playlist given (as key).
         Returns the updated playlist.
         '''
-        if key in playlists:
+        with self.conn.cursor() as curr:
             for song_id in songs:
-                plmap[key].append(song_id)
-                # update plmap
+                curr.execute('''INSERT INTO spmap (playlist_id, song_id) VALUES
+                                (%s, %s)''', (key, song_id))
+            self.conn.commit()
         return self.get_playlist(key)
 
     def remove_songs_from_playlist(self, key, songs):
@@ -145,19 +181,25 @@ class Database(object):
         Removes the songs given (as ids) from the playlist given (as key).
         Returns the updated playlist.
         '''
-        if key in playlists:
+        with self.conn.cursor() as curr:
             for song_id in songs:
-                plmap[key].remove(int(song_id))
-                # remove song_id from plmap
+                curr.execute('''DELETE FROM spmap WHERE
+                                song_id=%s AND playlist_id=%s''',
+                             (song_id, key))
+            self.conn.commit()
         return self.get_playlist(key)
 
     def add_comment_to_playlist(self, key, comment):
         '''
         Adds a comment by an user to the database
         '''
-        self.playlists[key].add_comment(comment)
-        # update playlist-comment mapping
-        return self.playlists[key]
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT user_id FROM users WHERE nickname=%s", (comment.author,))
+            curr.execute('''INSERT INTO comments (content, publish_date, author_id, playlist_id)
+                            VALUES (%s, %s, %s, %s)''',
+                            (comment.content, comment.date, curr.fetchone()[0], key))
+            self.conn.commit()
+        return self.get_playlist(key)
 
     def remove_comments_from_playlist(self, key, comment_id):
         '''
@@ -168,68 +210,97 @@ class Database(object):
         # update playlist-comment mapping
         return self.playlists[key]
 
+    @handle_db_exception
     def add_song_to_database(self, song):
         '''
         Adds a given song object to the database
         '''
-        song.s_id(self.song_id)
-        self.song_id += 1
-        songs[song.id] = song
-        # add song to songs database
-#        db_id = 5 # get the id back
-#        song.s_id(db_id)
+        with self.conn.cursor() as curr:
+#            if song.duration == '':
+ #               song.duration = None
+            curr.execute("SELECT song_id FROM songs WHERE title=%s AND artist=%s AND album=%s ", (song.title, song.artist, song.album))
+            song_id = curr.fetchone()
+            if not song_id:
+                curr.execute('''INSERT INTO songs (title, artist, album, duration) VALUES
+                                (%s, %s, %s, %s) RETURNING song_id''',
+                                (song.title, song.artist, song.album, song.duration))
+                song.s_id(curr.fetchone()[0])
+                self.conn.commit()
+            else:
+                song.s_id(song_id[0])
         return song
-
-    def get_song(self, song_id):
-        '''
-        Gets the song with the given id from the database
-        '''
-        song = self.songs.get(song_id)
-        if song is None:
-            return None
-        else:
-            return song.copy()
-
-    def del_song(self, song_id):
-        '''
-        Deletes the song with the given id from the database
-        '''
-        # remove song_id from songs
 
     def get_featured_playlist(self):
         '''
         Returns a randomly selected playlist from featured ones
         '''
         # get a random key from featured playlists
-        playlist = self.get_playlist(random.choice([1,2,3]))
-        while playlist is None:
-            playlist = self.get_playlist(random.choice([1,2,3]))
-        return playlist
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT playlist_id FROM playlists WHERE privacy IS NULL")
+            playlist = self.get_playlist(random.choice(curr.fetchall()))
+            return playlist
 
-    def get_featured_playlists(self, n=15):
+    def get_featured_playlists(self, n=3):
         '''
         Returns randomly chosen n featured playlists
         '''
-        featured = []
-        for i in range(max(n, 3)): #3 = len of playlists
-            fpl = self.get_featured_playlist()
-            while(fpl in featured):
-                fpl = self.get_featured_playlist()
-            featured.append(fpl)
-        return [playlists[1], playlists[2], playlists[3]]
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT playlist_id FROM playlists WHERE privacy IS NULL")
+            playlists = [self.get_playlist(key) for key in random.sample(curr.fetchall(), n)]
+            return playlists
+
 
     def get_playlists_by(self, user):
-        res_playlists = []
-        #SELECT * FROM playlists WHERE creator_id = (SELECT user_id FROM users WHERE username=user.name)
-        for pl in playlists:
-            if playlists[pl].creator == user.username:
-                res_playlists.append(playlists[pl])
-        return res_playlists
+        with self.conn.cursor() as curr:
+            curr.execute('''SELECT playlists.playlist_id
+                            FROM (users INNER JOIN playlists ON playlists.creator_id = users.user_id)
+                            WHERE users.nickname=%s;''', (user.username,))
+            playlists = [self.get_playlist(key) for key in curr.fetchall()]
+        return playlists
+
+    def get_playlists_using_id(self, user_id):
+        with self.conn.cursor() as curr:
+            curr.execute('''SELECT playlists.playlist_id
+                            FROM (users INNER JOIN playlists ON playlists.creator_id = users.user_id)
+                            WHERE users.user_id=%s;''', (user_id,))
+            playlists = [self.get_playlist(key) for key in curr.fetchall()]
+        return playlists
 
 
-    def get_user_tuple(self, user_id):
-        return users.get(user_id)
+    def get_user_tuple(self, username):
+        '''
+        Returns the user with given username
+        '''
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT * FROM users WHERE nickname=%s", (username,))
+            return curr.fetchone()
+
+    def get_username(self, user_id):
+        '''
+        Returns the user with given username
+        '''
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT nickname FROM users WHERE user_id=%s", (user_id,))
+            return curr.fetchone()[0]
+
+    def get_user_by_email(self, email):
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT * FROM users WHERE email=%s", (email,))
+            return curr.fetchone()
+
 
     def register_user(self, user):
-        users[user.username] = (user.id, user.email, user.username, user.password)
+        with self.conn.cursor() as curr:
+            curr.execute("INSERT INTO users (nickname, email, password) VALUES (%s,%s,%s) RETURNING user_id", (user.username, user.email, user.password))
+            user.id = curr.fetchone()[0]
+            self.conn.commit()
         return user
+
+
+    def check_auth(self, user_id, key):
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT creator_id FROM playlists WHERE playlist_id=%s", (key,))
+            if curr.fetchone()[0] == user_id:
+                return True
+            else:
+                return False

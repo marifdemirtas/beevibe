@@ -30,6 +30,16 @@
         </form>
       </div>
     </nav>
+
+
+    {% with mailbox = get_flashed_messages() %}
+    {% if mailbox %}
+    <div><ul>{% for message in mailbox %}
+    <li>{{message}}</li>
+    {% endfor %}
+    </ul></div>
+    {% endif %}
+    {% endwith %}
     {% block content %}{% endblock %}
   </body>
   {% block script %}{% endblock %}
@@ -51,6 +61,7 @@
                     for(const attr of res.results){
                       let node = document.createElement('LI');
                       node.innerText = attr;
+//                      node.innerHTML = "<a href="">node.innerText</a>
                       node.classList.add('list-group-item');
                       results.appendChild(node);
                     }
