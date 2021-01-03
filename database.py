@@ -1,3 +1,5 @@
+
+import os
 from data import *
 import random
 import datetime
@@ -32,7 +34,7 @@ def handle_db_exception(f):
 class Database(object):
 
     def __init__(self):
-        self.conn = psql.connect(database="test", user="marif")
+        self.conn = psql.connect(os.environ['DATABASE_URL'], sslmode='require')
 
     @handle_db_exception
     def get_playlist(self, key):
