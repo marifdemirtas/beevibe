@@ -21,7 +21,7 @@ def error_direction(f):
         except Exception as e:
             return abort(404)
     wrap.__name__ = f.__name__
-#    return wrap
+    return wrap
     return f
 
 
@@ -163,7 +163,7 @@ def playlist_add():
 @error_direction
 def playlist_edit(key):
     if not current_app.config['db'].check_auth(current_user.id, key):
-        return abort(404)
+        return abort(403)
     form = EditPlaylistForm()
     playlist = current_app.config["db"].get_playlist(int(key))
     if request.method == "POST":
@@ -178,7 +178,7 @@ def playlist_edit(key):
 @error_direction
 def delete_comment(key):
     if not current_app.config['db'].check_auth(current_user.id, key):
-        return abort(404)
+        return abort(403)
     comment_ids = request.form.keys()
     comments = [int(cid) for cid in comment_ids]
     current_app.config["db"].remove_comments_from_playlist(int(key), comments)
@@ -189,7 +189,7 @@ def delete_comment(key):
 @error_direction
 def remove_song(key):
     if not current_app.config['db'].check_auth(current_user.id, key):
-        return abort(404)
+        return abort(403)
     song_ids = request.form.keys()
     songs = [int(sid) for sid in song_ids]
     current_app.config["db"].remove_songs_from_playlist(int(key), songs)
@@ -199,7 +199,7 @@ def remove_song(key):
 @error_direction
 def add_song(key):
     if not current_app.config['db'].check_auth(current_user.id, key):
-        return abort(404)
+        return abort(403)
     song = Song(request.form["new_song"], request.form["new_artist"],
                 request.form["new_album"], request.form["new_duration"])
     song = current_app.config["db"].add_song_to_database(song)
@@ -215,7 +215,7 @@ def add_song(key):
 @error_direction
 def add_comment(key):
     if not current_app.config['db'].check_auth(current_user.id, key):
-        return abort(404)
+        return abort(403)
     comment = Comment(request.form['content'], current_user.username)
     current_app.config["db"].add_comment_to_playlist(int(key), comment)
     return redirect(url_for("playlist", key=key))
@@ -272,7 +272,7 @@ def login():
         flash("Login unsuccessful")
         return render_template('login.html', form=form)
     if current_user.is_authenticated:
-        return abort(404)
+        return abort(403)
     return render_template('login.html', form=form)
 
 
@@ -300,3 +300,4 @@ def register():
             form.username.errors.append("This nickname is already registered.")
         return render_template('register.html', form=form)
     return render_template('register.html', form=form)
+

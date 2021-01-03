@@ -39,6 +39,7 @@ def create_app():
     app.add_url_rule('/profile/<int:key>', endpoint='user_ext', view_func=views.public_profile)
     app.add_url_rule('/playlist/<key>/auth', endpoint='get_password_for', methods=["GET", "POST"], view_func=views.get_password_for)
 
+
     lm.init_app(app)
     lm.login_view = "login"
 

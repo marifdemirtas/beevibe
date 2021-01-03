@@ -27,8 +27,8 @@ def handle_db_exception(f):
             args[0].conn.rollback()
             if isinstance(e, psql.errors.UniqueViolation):
                 raise DuplicateError()
-            #return None
- #   return wrap
+            return None
+    return wrap
     return f
 
 class Database(object):
@@ -84,11 +84,13 @@ class Database(object):
                         playlist.add_comment(comment)
         return playlist
 
+    @handle_db_exception
     def remove_playlist(self, key):
         with self.conn.cursor() as curr:
             curr.execute("DELETE FROM playlists WHERE playlist_id=%s", (key,))
             self.conn.commit()
 
+    @handle_db_exception
     def add_playlist(self, playlist):
         '''
         Adds the given playlist to the db
@@ -107,6 +109,7 @@ class Database(object):
             self.conn.commit()
         return playlist
 
+    @handle_db_exception
     def search_playlists_by_title(self, title):
         '''
         Returns the corePlaylist objects related with title.
@@ -121,6 +124,7 @@ class Database(object):
             return [corePlaylist(*row) for row in curr.fetchmany(5)]
 
 
+    @handle_db_exception
     def search_song_by_title(self, title):
         ret_songs = []
         with self.conn.cursor() as curr:
@@ -131,6 +135,7 @@ class Database(object):
         return ret_songs
 
 
+    @handle_db_exception
     def search_playlists_by_creator(self, creator):
         '''
         Returns the corePlaylist objects related with creator.
@@ -144,6 +149,7 @@ class Database(object):
                             WHERE users.nickname LIKE %s''', (creator + '%',))
             return [corePlaylist(*row) for row in curr.fetchmany(5)]
 
+    @handle_db_exception
     def del_playlist(self, key):
         '''
         Deletes the playlist with given key.
@@ -152,6 +158,7 @@ class Database(object):
             curr.execute("DELETE FROM playlists WHERE playlist_id=%s", (key,))
 
 
+    @handle_db_exception
     def update_playlist(self, playlist):
         '''
         Given a playlist object, updates the one in database with the same key
@@ -178,6 +185,7 @@ class Database(object):
             self.conn.commit()
         return self.get_playlist(key)
 
+    @handle_db_exception
     def remove_songs_from_playlist(self, key, songs):
         '''
         Removes the songs given (as ids) from the playlist given (as key).
@@ -191,6 +199,7 @@ class Database(object):
             self.conn.commit()
         return self.get_playlist(key)
 
+    @handle_db_exception
     def add_comment_to_playlist(self, key, comment):
         '''
         Adds a comment by an user to the database
@@ -203,6 +212,7 @@ class Database(object):
             self.conn.commit()
         return self.get_playlist(key)
 
+    @handle_db_exception
     def remove_comments_from_playlist(self, key, comment_id):
         '''
         Adds a comment by an user to the database
@@ -232,6 +242,7 @@ class Database(object):
                 song.s_id(song_id[0])
         return song
 
+    @handle_db_exception
     def get_featured_playlist(self):
         '''
         Returns a randomly selected playlist from featured ones
@@ -242,6 +253,7 @@ class Database(object):
             playlist = self.get_playlist(random.choice(curr.fetchall()))
             return playlist
 
+    @handle_db_exception
     def get_featured_playlists(self, n=3):
         '''
         Returns randomly chosen n featured playlists
@@ -252,6 +264,7 @@ class Database(object):
             return playlists
 
 
+    @handle_db_exception
     def get_playlists_by(self, user):
         with self.conn.cursor() as curr:
             curr.execute('''SELECT playlists.playlist_id
@@ -260,6 +273,7 @@ class Database(object):
             playlists = [self.get_playlist(key) for key in curr.fetchall()]
         return playlists
 
+    @handle_db_exception
     def get_playlists_using_id(self, user_id):
         with self.conn.cursor() as curr:
             curr.execute('''SELECT playlists.playlist_id
@@ -269,6 +283,7 @@ class Database(object):
         return playlists
 
 
+    @handle_db_exception
     def get_user_tuple(self, username):
         '''
         Returns the user with given username
@@ -277,6 +292,7 @@ class Database(object):
             curr.execute("SELECT * FROM users WHERE nickname=%s", (username,))
             return curr.fetchone()
 
+    @handle_db_exception
     def get_username(self, user_id):
         '''
         Returns the user with given username
@@ -285,12 +301,14 @@ class Database(object):
             curr.execute("SELECT nickname FROM users WHERE user_id=%s", (user_id,))
             return curr.fetchone()[0]
 
+    @handle_db_exception
     def get_user_by_email(self, email):
         with self.conn.cursor() as curr:
             curr.execute("SELECT * FROM users WHERE email=%s", (email,))
             return curr.fetchone()
 
 
+    @handle_db_exception
     def register_user(self, user):
         with self.conn.cursor() as curr:
             curr.execute("INSERT INTO users (nickname, email, password) VALUES (%s,%s,%s) RETURNING user_id", (user.username, user.email, user.password))
@@ -299,6 +317,7 @@ class Database(object):
         return user
 
 
+    @handle_db_exception
     def check_auth(self, user_id, key):
         with self.conn.cursor() as curr:
             curr.execute("SELECT creator_id FROM playlists WHERE playlist_id=%s", (key,))
