@@ -29,6 +29,26 @@
         </p>
         <p>{{form.submit()}}</p>
        </form>
+
+       <h2>or import from Spotify: </h2>
+
+       <form method="POST" enctype="multipart/form-data">
+        {{import_form.hidden_tag()}}
+        <p>
+            {{import_form.uri.label}}<br>
+            {{import_form.uri()}}
+        {% for error in import_form.uri.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {%endfor%}</p>
+        <p>
+            {{import_form.file.label}}<br>
+            {{import_form.file()}}
+        {% for error in import_form.file.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {%endfor%}</p>
+        <p>{{import_form.import_btn()}}</p>
+       </form>
+        
     </div>
 {% endblock %}
 {% block script %}

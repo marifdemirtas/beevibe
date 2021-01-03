@@ -8,6 +8,8 @@
             <td><a href="{{url_for('playlist', key=playlist.id)}}">{{playlist.title}}</a></td>
             <td>{{playlist.creator}}</td>
         </tr>
+        {% else %}
+            <p>No playlists found.</p>
         {% endfor %}
     </table>
 </div>

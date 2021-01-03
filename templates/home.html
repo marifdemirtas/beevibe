@@ -28,7 +28,7 @@
     img.onload = () => {
         ctx = canvas.getContext('2d');
         ctx.fillStyle = "{{playlist.page.color}}";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        roundRect(ctx, 0, 0, canvas.width, canvas.height);
         ctx.globalCompositeOperation = 'source-atop';
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         ctx.font = "italic bold 50px fantasy";
@@ -37,5 +37,25 @@
     };
     img.src = "https://cdn.pixabay.com/photo/2014/03/25/16/54/tape-297596_960_720.png";
 //    img.src = "{{url_for('static', filename='cassette-312681.svg')}}";
+    /**
+     * Draws a rectangle with corner radius r with top left corner at (x, y)
+     *
+     * Adapted from: http://js-bits.blogspot.com/2010/07/canvas-rounded-corner-rectangles.html
+     */
+    function roundRect(ctx, x, y, width, height) {
+      r = 45; //corner radius
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + width - r, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+      ctx.lineTo(x + width, y + height - r);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+      ctx.lineTo(x + r, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+      ctx.fill();
+    }
   </script>
 {% endblock %}

@@ -19,7 +19,6 @@ class DuplicateError(Exception):
 
 def handle_db_exception(f):
     def wrap(*args, **kwargs):
-        print("HERE")
         try:
             return f(*args, **kwargs)
         except Exception as e:
@@ -48,7 +47,6 @@ class Database(object):
             else:
                 curr.execute("SELECT nickname FROM users WHERE user_id=%s", (res[-1],))
                 creator = curr.fetchone()[0]
-                print(creator)
                 p_id, title, descr, color, commenting, privacy, expire_date, thumbnail, _ = res
                 playlist = Playlist(title, creator, descr)
                 playlist.page.set_color(color)
@@ -79,7 +77,6 @@ class Database(object):
                                     INNER JOIN users ON comments.author_id = users.user_id)
                                     WHERE playlists.playlist_id=%s;''', (playlist.id,))
                     comments = curr.fetchall()
-                    print(comments)
                     for comment_t in comments:
                         comment = Comment(*comment_t)
                         playlist.add_comment(comment)
@@ -158,9 +155,13 @@ class Database(object):
         Given a playlist object, updates the one in database with the same key
         with the given object.
         '''
-        db_playlist = self.get_playlist(playlist.key)
-        # for diff_attr in (db_playlist, playlist)
-        #    update database accordingly
+        with self.conn.cursor() as curr:
+            curr.execute('''UPDATE playlists SET
+                            color=%s,
+                            description=%s
+                            WHERE playlist_id=%s''',
+                         (playlist.page.color, playlist.metadata.descr, playlist.id))
+        return self.get_playlist(playlist.id)
 
     @handle_db_exception
     def add_songs_to_playlist(self, key, songs):
@@ -180,10 +181,12 @@ class Database(object):
         Removes the songs given (as ids) from the playlist given (as key).
         Returns the updated playlist.
         '''
-        if key in playlists:
+        with self.conn.cursor() as curr:
             for song_id in songs:
-                plmap[key].remove(int(song_id))
-                # remove song_id from plmap
+                curr.execute('''DELETE FROM spmap WHERE
+                                song_id=%s AND playlist_id=%s''',
+                             (song_id, key))
+            self.conn.commit()
         return self.get_playlist(key)
 
     def add_comment_to_playlist(self, key, comment):
@@ -280,11 +283,24 @@ class Database(object):
             curr.execute("SELECT nickname FROM users WHERE user_id=%s", (user_id,))
             return curr.fetchone()[0]
 
+    def get_user_by_email(self, email):
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT * FROM users WHERE email=%s", (email,))
+            return curr.fetchone()
+
 
     def register_user(self, user):
         with self.conn.cursor() as curr:
-            curr.execute("INSERT INTO users (nickname, email, password) VALUES (%s,%s,%s)", (user.username, user.email, user.password))
-            curr.execute("SELECT user_id FROM users WHERE nickname=%s", (user.username,))
+            curr.execute("INSERT INTO users (nickname, email, password) VALUES (%s,%s,%s) RETURNING user_id", (user.username, user.email, user.password))
             user.id = curr.fetchone()[0]
             self.conn.commit()
         return user
+
+
+    def check_auth(self, user_id, key):
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT creator_id FROM playlists WHERE playlist_id=%s", (key,))
+            if curr.fetchone()[0] == user_id:
+                return True
+            else:
+                return False
