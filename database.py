@@ -42,12 +42,12 @@ class Database(object):
         Fetches the playlist with given key, returns Playlist object
         '''
         with self.conn.cursor() as curr:
-            curr.execute("SELECT * FROM playlists WHERE playlist_id=%s", (key,))
+            curr.execute("SELECT * FROM playlists WHERE playlist_id=%s;", (key,))
             res = curr.fetchone()
             if res == None:
                 playlist = None
             else:
-                curr.execute("SELECT nickname FROM users WHERE user_id=%s", (res[-1],))
+                curr.execute("SELECT nickname FROM users WHERE user_id=%s;", (res[-1],))
                 creator = curr.fetchone()[0]
                 p_id, title, descr, color, commenting, privacy, expire_date, thumbnail, _ = res
                 playlist = Playlist(title, creator, descr)
@@ -87,7 +87,7 @@ class Database(object):
     @handle_db_exception
     def remove_playlist(self, key):
         with self.conn.cursor() as curr:
-            curr.execute("DELETE FROM playlists WHERE playlist_id=%s", (key,))
+            curr.execute("DELETE FROM playlists WHERE playlist_id=%s;", (key,))
             self.conn.commit()
 
     @handle_db_exception
@@ -96,16 +96,16 @@ class Database(object):
         Adds the given playlist to the db
         '''
         with self.conn.cursor() as curr:
-            curr.execute("SELECT user_id FROM users WHERE nickname=%s", (playlist.creator,))
+            curr.execute("SELECT user_id FROM users WHERE nickname=%s;", (playlist.creator,))
             creator_id = curr.fetchone()[0]
             curr.execute('''INSERT INTO playlists (title, description, color, commenting, privacy, expire_date, thumbnail, creator_id)
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                            RETURNING playlist_id''',
+                            RETURNING playlist_id;''',
                             (playlist.title, playlist.metadata.descr, playlist.page.color, playlist.page.commenting, playlist.page.password, playlist.page.expiration, playlist.metadata.thumbnail, creator_id));
             playlist.s_id(curr.fetchone()[0])
             for song_id in playlist.songs:
                 curr.execute('''INSERT INTO spmap (song_id, playlist_id, song_description) VALUES
-                            (%s, %s, %s)''', (song_id, playlist.id, playlist.song_descr[song_id]))
+                            (%s, %s, %s);''', (song_id, playlist.id, playlist.song_descr[song_id]))
             self.conn.commit()
         return playlist
 
@@ -120,7 +120,7 @@ class Database(object):
         with self.conn.cursor() as curr:
             curr.execute('''SELECT playlists.playlist_id, playlists.title, users.nickname FROM playlists
                             INNER JOIN users ON users.user_id=playlists.creator_id
-                            WHERE playlists.title LIKE %s''', (title + '%',))
+                            WHERE playlists.title LIKE %s;''', (title + '%',))
             return [corePlaylist(*row) for row in curr.fetchmany(5)]
 
 
@@ -128,7 +128,7 @@ class Database(object):
     def search_song_by_title(self, title):
         ret_songs = []
         with self.conn.cursor() as curr:
-            curr.execute("SELECT * FROM songs WHERE title LIKE %s", (title + '%',))
+            curr.execute("SELECT * FROM songs WHERE title LIKE %s;", (title + '%',))
             for song in curr.fetchmany(5):
                 ret_songs.append(Song(*song[1:]))
                 ret_songs[-1].s_id(song[0])
@@ -146,7 +146,7 @@ class Database(object):
         with self.conn.cursor() as curr:
             curr.execute('''SELECT playlists.playlist_id, playlists.title, users.nickname FROM playlists
                             INNER JOIN users ON users.user_id=playlists.creator_id
-                            WHERE users.nickname LIKE %s''', (creator + '%',))
+                            WHERE users.nickname LIKE %s;''', (creator + '%',))
             return [corePlaylist(*row) for row in curr.fetchmany(5)]
 
     @handle_db_exception
@@ -155,7 +155,7 @@ class Database(object):
         Deletes the playlist with given key.
         '''
         with self.conn.cursor() as curr:
-            curr.execute("DELETE FROM playlists WHERE playlist_id=%s", (key,))
+            curr.execute("DELETE FROM playlists WHERE playlist_id=%s;", (key,))
 
 
     @handle_db_exception
@@ -165,10 +165,11 @@ class Database(object):
         with the given object.
         '''
         with self.conn.cursor() as curr:
+            print(playlist.id)
             curr.execute('''UPDATE playlists SET
                             color=%s,
                             description=%s
-                            WHERE playlist_id=%s''',
+                            WHERE playlist_id=%s;''',
                          (playlist.page.color, playlist.metadata.descr, playlist.id))
         return self.get_playlist(playlist.id)
 
@@ -181,7 +182,7 @@ class Database(object):
         with self.conn.cursor() as curr:
             for song_id in songs:
                 curr.execute('''INSERT INTO spmap (playlist_id, song_id) VALUES
-                                (%s, %s)''', (key, song_id))
+                                (%s, %s);''', (key, song_id))
             self.conn.commit()
         return self.get_playlist(key)
 
@@ -194,7 +195,7 @@ class Database(object):
         with self.conn.cursor() as curr:
             for song_id in songs:
                 curr.execute('''DELETE FROM spmap WHERE
-                                song_id=%s AND playlist_id=%s''',
+                                song_id=%s AND playlist_id=%s;''',
                              (song_id, key))
             self.conn.commit()
         return self.get_playlist(key)
@@ -207,7 +208,7 @@ class Database(object):
         with self.conn.cursor() as curr:
             curr.execute("SELECT user_id FROM users WHERE nickname=%s", (comment.author,))
             curr.execute('''INSERT INTO comments (content, publish_date, author_id, playlist_id)
-                            VALUES (%s, %s, %s, %s)''',
+                            VALUES (%s, %s, %s, %s);''',
                             (comment.content, comment.date, curr.fetchone()[0], key))
             self.conn.commit()
         return self.get_playlist(key)
@@ -230,11 +231,11 @@ class Database(object):
         with self.conn.cursor() as curr:
 #            if song.duration == '':
  #               song.duration = None
-            curr.execute("SELECT song_id FROM songs WHERE title=%s AND artist=%s AND album=%s ", (song.title, song.artist, song.album))
+            curr.execute("SELECT song_id FROM songs WHERE title=%s AND artist=%s AND album=%s;", (song.title, song.artist, song.album))
             song_id = curr.fetchone()
             if not song_id:
                 curr.execute('''INSERT INTO songs (title, artist, album, duration) VALUES
-                                (%s, %s, %s, %s) RETURNING song_id''',
+                                (%s, %s, %s, %s) RETURNING song_id;''',
                                 (song.title, song.artist, song.album, song.duration))
                 song.s_id(curr.fetchone()[0])
                 self.conn.commit()
@@ -249,7 +250,7 @@ class Database(object):
         '''
         # get a random key from featured playlists
         with self.conn.cursor() as curr:
-            curr.execute("SELECT playlist_id FROM playlists WHERE privacy IS NULL")
+            curr.execute("SELECT playlist_id FROM playlists WHERE privacy IS NULL;")
             playlist = self.get_playlist(random.choice(curr.fetchall()))
             return playlist
 
@@ -259,7 +260,7 @@ class Database(object):
         Returns randomly chosen n featured playlists
         '''
         with self.conn.cursor() as curr:
-            curr.execute("SELECT playlist_id FROM playlists WHERE privacy IS NULL")
+            curr.execute("SELECT playlist_id FROM playlists WHERE privacy IS NULL;")
             playlists = [self.get_playlist(key) for key in random.sample(curr.fetchall(), n)]
             return playlists
 
@@ -289,7 +290,7 @@ class Database(object):
         Returns the user with given username
         '''
         with self.conn.cursor() as curr:
-            curr.execute("SELECT * FROM users WHERE nickname=%s", (username,))
+            curr.execute("SELECT * FROM users WHERE nickname=%s;", (username,))
             return curr.fetchone()
 
     @handle_db_exception
@@ -298,20 +299,20 @@ class Database(object):
         Returns the user with given username
         '''
         with self.conn.cursor() as curr:
-            curr.execute("SELECT nickname FROM users WHERE user_id=%s", (user_id,))
+            curr.execute("SELECT nickname FROM users WHERE user_id=%s;", (user_id,))
             return curr.fetchone()[0]
 
     @handle_db_exception
     def get_user_by_email(self, email):
         with self.conn.cursor() as curr:
-            curr.execute("SELECT * FROM users WHERE email=%s", (email,))
+            curr.execute("SELECT * FROM users WHERE email=%s;", (email,))
             return curr.fetchone()
 
 
     @handle_db_exception
     def register_user(self, user):
         with self.conn.cursor() as curr:
-            curr.execute("INSERT INTO users (nickname, email, password) VALUES (%s,%s,%s) RETURNING user_id", (user.username, user.email, user.password))
+            curr.execute("INSERT INTO users (nickname, email, password) VALUES (%s,%s,%s) RETURNING user_id;", (user.username, user.email, user.password))
             user.id = curr.fetchone()[0]
             self.conn.commit()
         return user
@@ -320,7 +321,7 @@ class Database(object):
     @handle_db_exception
     def check_auth(self, user_id, key):
         with self.conn.cursor() as curr:
-            curr.execute("SELECT creator_id FROM playlists WHERE playlist_id=%s", (key,))
+            curr.execute("SELECT creator_id FROM playlists WHERE playlist_id=%s;", (key,))
             if curr.fetchone()[0] == user_id:
                 return True
             else:
