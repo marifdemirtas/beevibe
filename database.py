@@ -156,6 +156,7 @@ class Database(object):
         '''
         with self.conn.cursor() as curr:
             curr.execute("DELETE FROM playlists WHERE playlist_id=%s;", (key,))
+            self.conn.commit()
 
 
     @handle_db_exception
@@ -165,12 +166,12 @@ class Database(object):
         with the given object.
         '''
         with self.conn.cursor() as curr:
-            print(playlist.id)
             curr.execute('''UPDATE playlists SET
                             color=%s,
                             description=%s
                             WHERE playlist_id=%s;''',
                          (playlist.page.color, playlist.metadata.descr, playlist.id))
+            self.conn.commit()
         return self.get_playlist(playlist.id)
 
     @handle_db_exception
