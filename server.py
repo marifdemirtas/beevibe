@@ -1,11 +1,12 @@
 from flask import Flask, request
 from flask_login import LoginManager
-
+import os
 import views
 from data import *
 from database import Database
 import json
 from user import get_user
+import config
 
 lm = LoginManager()
 
@@ -17,7 +18,7 @@ def load_user(user_id):
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_envvar("SETTINGS")
+    app.config.from_object("config.Development")
 
     app.add_url_rule('/', endpoint='index', view_func=views.index)
     app.add_url_rule('/random', endpoint='random', view_func=views.rand_playlist)
