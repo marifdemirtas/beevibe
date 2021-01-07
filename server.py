@@ -1,12 +1,10 @@
-from flask import Flask, request
+from flask import Flask
 from flask_login import LoginManager
-import os
+import logging
+
 import views
-from data import *
 from database import Database
-import json
 from user import get_user
-import config
 
 lm = LoginManager()
 
@@ -45,12 +43,17 @@ def create_app():
     lm.init_app(app)
     lm.login_view = "login"
 
-    db = Database()
+    db = Database(app.config['DATABASE_URL'])
     app.config["db"] = db
+
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
 
     return app
 
 
 if __name__ == "__main__":
     app = create_app()
+
 #    app.run(host="0.0.0.0", port="8080", debug=True)

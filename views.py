@@ -1,11 +1,13 @@
 from flask import render_template, current_app, abort, url_for, request, redirect, Response, flash
+from flask_login import current_user, login_user, logout_user, login_required
+from hashlib import sha256
+import json
+import colour
+
 from user import get_user, User
 from data import *
 from forms import *
-from database import DuplicateError
-import json
-from flask_login import current_user, login_user, logout_user, login_required
-from hashlib import sha256
+from utils import error_direction, DuplicateError
 
 '''
 to-do
@@ -14,15 +16,6 @@ users should be able to delete comments
 import from spotify should be refined
 '''
 
-def error_direction(f):
-    def wrap(*args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except Exception as e:
-            return abort(404)
-    wrap.__name__ = f.__name__
-    return wrap
-    return f
 
 
 @error_direction
