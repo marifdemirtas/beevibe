@@ -58,7 +58,10 @@ def playlist(key):
         return abort(404)
     #    playlist = current_app.config["db"].get_playlist(key)
     if playlist.page.password is not None:
-        return redirect(url_for("get_password_for", key=key))
+        if current_user.is_authenticated and (current_user.username == playlist.creator):
+            pass
+        else:
+            return redirect(url_for("get_password_for", key=key))
     return render_template("playlist.html", playlist=playlist)
 
 
@@ -68,7 +71,10 @@ def get_password_for(key):
         return render_template("password-enter.html", status=True)
     else:
         playlist = current_app.config["db"].get_playlist(int(key))
-        if request.form["password"] == playlist.page.password:
+        if sha256(request.form["password"].encode('utf-8')).hexdigest() == playlist.page.password:
+            if current_user.is_authenticated:
+                current_user.auth_playlists.append(playlist.id)
+                current_app.logger.debug(current_user.auth_playlists)
             return render_template("playlist.html", playlist=playlist)
         else:
             return render_template("password-enter.html", status=False)
@@ -129,10 +135,16 @@ def playlist_add():
     form = CreatePlaylistForm()
     import_form = ImportPlaylistForm()
     if form.validate_on_submit():
+        current_app.logger.debug(form.color.data.hex)
+        if form.color.data.hex == '#000':
+            current_app.logger.debug("IF TRIGGERED")
+            form.color.data.hex = '#000000'
+        current_app.logger.debug(form.color.data.hex)
         playlist = Playlist(title=form.title.data,
                             creator=current_user.username,
                             descr=form.descr.data)
         playlist.page.set_color(form.color.data.hex)
+        playlist.page.set_password(form.privacy.data)
         playlist = current_app.config["db"].add_playlist(playlist)
         return redirect(url_for("playlist_edit", key=playlist.id))
     elif import_form.validate_on_submit():
@@ -141,7 +153,7 @@ def playlist_add():
             try:
                 import_from(json.loads(f.stream.read()))
             except Exception as e:
-                print(e)
+                current_app.logger.debug(e)
                 import_form.file.errors.append("Invalid file.")
         else:
             temp = import_from(get_dict_from_spotify(import_form.uri.data))
@@ -162,6 +174,7 @@ def playlist_edit(key):
     if request.method == "POST":
         playlist.metadata.set_descr(form.descr.data)
         playlist.page.set_color(form.color.data.hex)
+        playlist.id = int(key)
         playlist = current_app.config["db"].update_playlist(playlist)
         return redirect(url_for('playlist', key=playlist.id))
     else:
@@ -176,7 +189,6 @@ def delete_comment(key):
     comments = [int(cid) for cid in comment_ids]
     current_app.config["db"].remove_comments_from_playlist(int(key), comments)
     return redirect(url_for("playlist_edit", key=key))
-
 
 
 @error_direction
@@ -200,15 +212,13 @@ def add_song(key):
         current_app.config["db"].add_songs_to_playlist(int(key), [song.id])
     except DuplicateError as e:
         flash("Song already in playlist.")
-        print("Song already in playlist.")
+        current_app.logger.debug("Song already in playlist.")
     return redirect(url_for("playlist_edit", key=key))
 
 
 @login_required
 @error_direction
 def add_comment(key):
-    if not current_app.config['db'].check_auth(current_user.id, key):
-        return abort(403)
     comment = Comment(request.form['content'], current_user.username)
     current_app.config["db"].add_comment_to_playlist(int(key), comment)
     return redirect(url_for("playlist", key=key))
@@ -225,7 +235,7 @@ def search():
     if status:
         # fill up result array
         results = current_app.config['db'].search_playlists_by_title(request.form['query'])
-        response["results"] = [f"{res.title}, by {res.creator}" for res in results]
+        response["results"] = [f"{res.title}, by {res.creator}:{res.id}" for res in results]
 
     encoded_obj = json.dumps(response, ensure_ascii=False).encode('utf8')
     return Response(encoded_obj,
@@ -284,7 +294,7 @@ def register():
             if current_app.config['db'].get_user_by_email(form.email.data):
                 form.email.errors.append("This email is already registered.")
             else:
-                user = User(None, form.email.data, form.username.data, sha256(form.password.data.encode('utf-8')).hexdigest())
+                user = User(None, form.username.data, form.email.data, sha256(form.password.data.encode('utf-8')).hexdigest())
                 user = current_app.config['db'].register_user(user)
                 login_user(user)
                 next_page = request.args.get("next", url_for("index"))

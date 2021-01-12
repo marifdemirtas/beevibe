@@ -6,6 +6,8 @@ PlaylistPage, PlaylistMetadata, PlaylistIterator.
 '''
 import copy
 import datetime
+from hashlib import sha256
+
 
 
 class Song(object):
@@ -160,7 +162,8 @@ class PlaylistPage:
         self.commenting = commenting
 
     def set_password(self, password):
-        self.password = password
+        if password is not None:
+            self.password = sha256(password.encode('utf-8')).hexdigest()
 
     def set_expiration(self, expiration):
         self.expiration = expiration
@@ -169,7 +172,7 @@ class PlaylistPage:
         '''
         Computations done according to https://planetcalc.com/7779/
         '''
-        if color is not None:
+        if color is not None and color != '' and len(color) > 6:
             self.color = color
             C_norm = ((int(color[1:3], 16) / 255),
                       (int(color[3:5], 16) / 255),

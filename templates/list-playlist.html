@@ -3,11 +3,11 @@
 {% block explanation %}
 {% if profile %}
     {% if profile == current_user.username%}
-    <p>Welcome to your profile, {{current_user.username}}.</p>
+    <h2><center><strong>Welcome to your profile, {{current_user.username}}.</strong></center></h2>
     {% else %}
-    <p>This is a list of playlists by {{profile}}.</p>
+    <h2><center><strong>This is a list of playlists by {{profile}}.</strong></center></h2>
     {% endif %}
 {% else %}
-<p>This is a list of featured playlists.</p>
+<p></strong></center>This is a list of featured playlists.</strong></center></p>
 {% endif %}
 {% endblock %}

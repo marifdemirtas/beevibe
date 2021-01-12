@@ -60,8 +60,8 @@
                   if(res.status){
                     for(const attr of res.results){
                       let node = document.createElement('LI');
-                      node.innerText = attr;
-//                      node.innerHTML = "<a href="">node.innerText</a>
+                      node.innerText = attr.split(':')[0];
+                      node.innerHTML = "<a href='/playlist/" + attr.split(':')[1] + "'>" + node.innerText + "</a>"
                       node.classList.add('list-group-item');
                       results.appendChild(node);
                     }

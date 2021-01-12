@@ -48,7 +48,8 @@ def handle_db_exception(f):
         try:
             return f(*args, **kwargs)
         except Exception as e:
-            current_app.logger.debug(e)  # CHANGE CURRENT_APP
+            current_app.logger.warning(e)
+            current_app.logger.warning(f"Triggered in {f.__name__}")
             args[0].conn.rollback()
             if isinstance(e, UniqueViolation):
                 raise DuplicateError()
@@ -78,7 +79,8 @@ def error_direction(f):
         try:
             return f(*args, **kwargs)
         except Exception as e:
-            current_app.logger.debug(e)
+            current_app.logger.warning(e)
+            current_app.logger.warning(f"Triggered in {f.__name__}")
             return abort(404)
     wrap.__name__ = f.__name__
     return wrap

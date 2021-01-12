@@ -58,7 +58,7 @@ class Database(object):
                 playlist = Playlist(title, creator, descr)
                 playlist.page.set_color(color)
                 playlist.page.set_commenting(commenting)
-                playlist.page.set_password(privacy)
+                playlist.page.password = privacy
                 playlist.page.set_expiration(expire_date)
                 playlist.metadata.set_thumbnail(thumbnail)
                 playlist.s_id(p_id)
@@ -174,6 +174,7 @@ class Database(object):
                             WHERE users.nickname LIKE %s;''', (creator + '%',))
             return [corePlaylist(*row) for row in curr.fetchmany(5)]
 
+
     @handle_db_exception
     def update_playlist(self, playlist):
         '''Updates a playlist in the the `playlists` table.
@@ -188,7 +189,8 @@ class Database(object):
             playlist (Playlist object): Updated Playlist object.
         '''
         with self.conn.cursor() as curr:
-            curr.execute("SELECT color, description FROM playlists WHERE playlist_id=%s;"(playlist.id,))
+            print(playlist, playlist.id)
+            curr.execute("SELECT color, description FROM playlists WHERE playlist_id=%s;",(playlist.id,))
             color, descr = curr.fetchone()
             color = playlist.page.color if playlist.page.color != color else color
             descr = playlist.metadata.descr if playlist.metadata.descr != descr else descr
