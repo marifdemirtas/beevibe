@@ -4,6 +4,7 @@ Includes exception-related functions and classes that
 are used in multiple files.
 '''
 from flask import current_app, abort
+from werkzeug.exceptions import HTTPException
 from psycopg2.errors import UniqueViolation
 
 
@@ -81,6 +82,8 @@ def error_direction(f):
         except Exception as e:
             current_app.logger.warning(e)
             current_app.logger.warning(f"Triggered in {f.__name__}")
+            if isinstance(e, HTTPException) and e.code == 403:
+                return abort(403)
             return abort(404)
     wrap.__name__ = f.__name__
     return wrap

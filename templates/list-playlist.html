@@ -1,13 +1,22 @@
+{% if profile == current_user.username%}
+{% extends "list-layout-editable.html" %}
+{% else %}
 {% extends "list-layout.html" %}
-{% block title %} - Featured Playlists {% endblock %}
+{% endif %}
+{% block title %} - {%if profile%}Profile{%else%}Featured Playlists{%endif%} {% endblock %}
 {% block explanation %}
 {% if profile %}
     {% if profile == current_user.username%}
     <h2><center><strong>Welcome to your profile, {{current_user.username}}.</strong></center></h2>
+    <center><a href="{{url_for('playlist_add')}}"><button class="btn btn-info">Create New Playlist</button></a></center>
     {% else %}
     <h2><center><strong>This is a list of playlists by {{profile}}.</strong></center></h2>
     {% endif %}
+    <p>Number of playlists: {{stats['numplaylist']}}</p>    
+    <p>Number of songs: {{stats['numsong']}}</p>    
+    <p>Favourite artist: {{stats['favartist']}}</p>    
+    <p>Favourite song: {{stats['favsong']}}</p>
 {% else %}
-<p></strong></center>This is a list of featured playlists.</strong></center></p>
+<p><strong><center>Start listening with these playlists, selected for you.</strong></center></p>
 {% endif %}
 {% endblock %}

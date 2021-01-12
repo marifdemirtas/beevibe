@@ -2,7 +2,7 @@
 {% block title %} - Create a playlist {% endblock %}
 {% block content %}
     <div class="container-md text-center playlist-container">
-        <form action="" method="POST">
+        <form action="" method="POST" enctype=multipart/form-data novalidate>
             {{form.hidden_tag()}}
         <h1>
             {{form.title.label}}<br>
@@ -11,6 +11,12 @@
         <span style="color: red;">[{{ error }}]</span>
         {%endfor%}   
         <h2>Created by {{current_user.username}}</h2>
+        <p>
+            {{form.image.label}}<br>
+            {{form.image()}}
+        {% for error in form.image.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {%endfor%}</p>
         <p>
             {{form.descr.label}}<br>
             {{form.descr()}}
@@ -21,6 +27,9 @@
         {{form.color}}{% for error in form.color.errors %}
         <span style="color: red;">[{{ error }}]</span>
         {%endfor%}</p>
+        <p> {{form.commenting.label}}<br>
+            {{form.commenting()}}
+        </p>
         <p>
             {{form.privacy.label}}<br>
             {{form.privacy()}}{% for error in form.privacy.errors %}

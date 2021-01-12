@@ -11,8 +11,8 @@
         <h2>Created by {{playlist.creator}}</h2>
         {% if playlist.metadata.status %}
         <div class="playlist-descr">
-            {% if playlist.metadata.image %}
-            <canvas id="playlist-thumbnail" width="100" height="100"></canvas>
+            {% if playlist.metadata.thumbnail %}
+            <img src="{{playlist.metadata.thumbnail}}" width="100" height="100">
             {% endif %}
             {% if playlist.metadata.descr %}
             <p id="playlist-descr-content">{{playlist.metadata.descr}}</p>

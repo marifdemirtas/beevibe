@@ -165,8 +165,11 @@ class PlaylistPage:
     def set_commenting(self, commenting):
         self.commenting = commenting
 
+    def toggle_commenting(self):
+        self.commenting = not self.commenting
+
     def set_password(self, password):
-        if password is not None:
+        if password is not None and password != '':
             self.password = sha256(password.encode('utf-8')).hexdigest()
 
     def set_expiration(self, expiration):
@@ -188,9 +191,12 @@ class PlaylistPage:
             self.text_color = '#303133' if text_luma > 0.04 else '#ffffff'
             # #303133 is dark with 0.03 luminance
             # #ffffff is white with 1 luminance
-        else:
-            self.color = '#000000'
-            self.text_color = '#303133'
+        elif self.color is None:
+                self.color = '#000000'
+                self.text_color = '#303133'
+        elif len(color) < 7:
+            self.color = (color + color[1:])[:7]
+
 
 
 class Comment:

@@ -39,21 +39,32 @@ def featured():
 @error_direction
 def profile():
     playlists = current_app.config["db"].get_playlists_by(current_user)
+    stats = {'numplaylist': 5,
+             'numsong': 30,
+             'favartist': 'The Doors',
+             'favsong': 'Riders on the Storm'}
     return render_template("list-playlist.html",
                            playlists=playlists,
-                           profile=current_user.username)
+                           profile=current_user.username,
+                           stats=stats)
 
 @error_direction
 def public_profile(key):
     playlists = current_app.config["db"].get_playlists_using_id(int(key))
+    stats = {'numplaylist': 5,
+             'numsong': 30,
+             'favartist': 'The Doors',
+             'favsong': 'Riders on the Storm'}
     return render_template("list-playlist.html",
                            playlists=playlists,
-                           profile=current_app.config["db"].get_username(int(key)))
+                           profile=current_app.config["db"].get_username(int(key)),
+                           stats=stats)
 
 @error_direction
 def playlist(key):
     playlist = current_app.config["db"].get_playlist(int(key))
     # validate
+    current_app.logger.debug(playlist.page.password)
     if playlist is None:
         return abort(404)
     #    playlist = current_app.config["db"].get_playlist(key)
@@ -135,16 +146,20 @@ def playlist_add():
     form = CreatePlaylistForm()
     import_form = ImportPlaylistForm()
     if form.validate_on_submit():
-        current_app.logger.debug(form.color.data.hex)
-        if form.color.data.hex == '#000':
-            current_app.logger.debug("IF TRIGGERED")
-            form.color.data.hex = '#000000'
-        current_app.logger.debug(form.color.data.hex)
+        if len(form.color.data.hex) < 7:
+            form.color.data.hex = (form.color.data.hex + '000000')[:7]
         playlist = Playlist(title=form.title.data,
                             creator=current_user.username,
                             descr=form.descr.data)
         playlist.page.set_color(form.color.data.hex)
+        playlist.page.set_commenting(form.commenting.data)
+        current_app.logger.debug(form.privacy.data)
         playlist.page.set_password(form.privacy.data)
+        current_app.logger.debug(playlist.page.password)
+        current_app.logger.debug(playlist.page.password is None)
+        if 'image' in request.files:
+            image = request.files['image'].read()
+            playlist.metadata.set_thumbnail(image)
         playlist = current_app.config["db"].add_playlist(playlist)
         return redirect(url_for("playlist_edit", key=playlist.id))
     elif import_form.validate_on_submit():
@@ -156,7 +171,7 @@ def playlist_add():
                 current_app.logger.debug(e)
                 import_form.file.errors.append("Invalid file.")
         else:
-            temp = import_from(get_dict_from_spotify(import_form.uri.data))
+            temp = import_from(get_dict_from_spotify(import_form.uri.data.split(':')[-1]))
             if temp is not None:
                 return temp
             else:
@@ -172,23 +187,38 @@ def playlist_edit(key):
     form = EditPlaylistForm()
     playlist = current_app.config["db"].get_playlist(int(key))
     if request.method == "POST":
+        current_app.logger.debug(isinstance(form.color.data, colour.Color))
+        current_app.logger.debug(form.descr.data)
         playlist.metadata.set_descr(form.descr.data)
         playlist.page.set_color(form.color.data.hex)
+        playlist.page.set_commenting(form.commenting.data)
         playlist.id = int(key)
         playlist = current_app.config["db"].update_playlist(playlist)
         return redirect(url_for('playlist', key=playlist.id))
     else:
+        form.descr.data = playlist.metadata.descr
+        form.color.data = colour.Color(playlist.page.color)
+        current_app.logger.debug(form.color.data)
+        current_app.logger.debug(form.color.data.hex)
+        form.commenting.data = playlist.page.commenting
         return render_template("playlist_edit.html", playlist=playlist, form=form)
 
 
 @error_direction
 def delete_comment(key):
-    if not current_app.config['db'].check_auth(current_user.id, key):
+    if not current_app.config['db'].check_auth(current_user.id, int(key)):
         return abort(403)
-    comment_ids = request.form.keys()
     comments = [int(cid) for cid in comment_ids]
     current_app.config["db"].remove_comments_from_playlist(int(key), comments)
     return redirect(url_for("playlist_edit", key=key))
+
+
+@error_direction
+def delete_playlist(key):
+    if not current_app.config['db'].check_auth(current_user.id, int(key)):
+        return abort(403)
+    current_app.config["db"].remove_playlist(int(key))
+    return redirect(url_for("user"))
 
 
 @error_direction
@@ -304,3 +334,10 @@ def register():
         return render_template('register.html', form=form)
     return render_template('register.html', form=form)
 
+
+def page_not_found(e):
+    return render_template('not-found.html'), 404
+
+
+def page_forbidden(e):
+    return render_template('forbidden.html'), 403

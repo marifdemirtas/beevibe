@@ -54,14 +54,17 @@ class Database(object):
                 curr.execute("SELECT nickname FROM users WHERE user_id=%s;",
                              (res[-1],))
                 creator = curr.fetchone()[0]
-                p_id, title, descr, color, commenting, privacy, expire_date, thumbnail, _ = res
+                p_id, title, descr, color, commenting, privacy, expire_date, _, _ = res
                 playlist = Playlist(title, creator, descr)
                 playlist.page.set_color(color)
                 playlist.page.set_commenting(commenting)
                 playlist.page.password = privacy
                 playlist.page.set_expiration(expire_date)
-                playlist.metadata.set_thumbnail(thumbnail)
                 playlist.s_id(p_id)
+                curr.execute("SELECT ENCODE(playlists.thumbnail, 'base64') FROM playlists WHERE playlist_id=%s", (playlist.id,))
+                img = curr.fetchone()[0]
+                if img is not None:
+                    playlist.metadata.set_thumbnail("data:image/png;base64," + img)
 
         if playlist is not None:
             if playlist.page.expiration is not None and playlist.page.expiration < datetime.datetime.now():
@@ -116,7 +119,8 @@ class Database(object):
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                             RETURNING playlist_id;''',
                          (playlist.title, playlist.metadata.descr, playlist.page.color, playlist.page.commenting,
-                          playlist.page.password, playlist.page.expiration, playlist.metadata.thumbnail, creator_id))
+                          playlist.page.password, playlist.page.expiration, psql.Binary(playlist.metadata.thumbnail),
+                          creator_id))
             playlist.s_id(curr.fetchone()[0])
             for song_id in playlist.songs:
                 curr.execute('''INSERT INTO spmap (song_id, playlist_id, song_description) VALUES
@@ -189,16 +193,16 @@ class Database(object):
             playlist (Playlist object): Updated Playlist object.
         '''
         with self.conn.cursor() as curr:
-            print(playlist, playlist.id)
             curr.execute("SELECT color, description FROM playlists WHERE playlist_id=%s;",(playlist.id,))
             color, descr = curr.fetchone()
             color = playlist.page.color if playlist.page.color != color else color
             descr = playlist.metadata.descr if playlist.metadata.descr != descr else descr
             curr.execute('''UPDATE playlists SET
                             color=%s,
-                            description=%s
+                            description=%s,
+                            commenting=%s
                             WHERE playlist_id=%s;''',
-                         (color, descr, playlist.id))
+                         (color, descr, playlist.page.commenting, playlist.id))
             self.conn.commit()
         return self.get_playlist(playlist.id)
 

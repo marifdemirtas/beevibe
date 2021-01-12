@@ -5,6 +5,7 @@
     <table class="table">
         {% for playlist in playlists%}
         <tr>
+            <td><a href="{{url_for('delete_playlist', key=playlist.id)}}"><button class="btn btn-danger">Delete</button></a></td>
             <td><a href="{{url_for('playlist', key=playlist.id)}}">{{playlist.title}}</a></td>
             <td>{{playlist.creator}}</td>
         </tr>
