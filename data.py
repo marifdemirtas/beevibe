@@ -153,6 +153,10 @@ class PlaylistPage:
     '''
 
     def __init__(self, color=None, commenting=False, password=None, expiration=None):
+        self.password = None
+        self.commenting = None
+        self.color = None
+        self.expiration = None
         self.set_color(color) # 7 character hex string: #RRGGBB
         self.set_commenting(commenting)
         self.set_password(password)
