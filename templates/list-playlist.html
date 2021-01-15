@@ -1,4 +1,4 @@
-{% if profile == current_user.username%}
+{% if profile and profile == current_user.username%}
 {% extends "list-layout-editable.html" %}
 {% else %}
 {% extends "list-layout.html" %}
