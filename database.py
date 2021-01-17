@@ -72,9 +72,9 @@ class Database(object):
                 playlist = None
             else:
                 with self.conn.cursor() as curr:
-                    curr.execute('''SELECT songs.song_id, songs.title, songs.artist, songs.album, songs.duration, songs.release_year, spmap.song_description
-                                    FROM (spmap INNER JOIN songs ON songs.song_id = spmap.song_id)
-                                    WHERE spmap.playlist_id=%s;''', (playlist.id,))
+                    curr.execute('''SELECT songs.song_id, songs.title, songs.artist, songs.album, songs.duration, songs.release_year, songplaylist_map.song_description
+                                    FROM (songplaylist_map INNER JOIN songs ON songs.song_id = songplaylist_map.song_id)
+                                    WHERE songplaylist_map.playlist_id=%s;''', (playlist.id,))
                     songs = curr.fetchall()
                     for song_t in songs:
                         song = Song(*song_t[1:-1])
@@ -123,7 +123,7 @@ class Database(object):
                           creator_id))
             playlist.s_id(curr.fetchone()[0])
             for song_id in playlist.songs:
-                curr.execute('''INSERT INTO spmap (song_id, playlist_id, song_description) VALUES
+                curr.execute('''INSERT INTO songplaylist_map (song_id, playlist_id, song_description) VALUES
                                 (%s, %s, %s);''', (song_id, playlist.id, playlist.song_descr[song_id]))
             self.conn.commit()
         return playlist
@@ -208,7 +208,7 @@ class Database(object):
 
     @handle_db_exception
     def add_songs_to_playlist(self, key, songs):
-        '''Adds new songs to a playlist by updating the `spmap` table.
+        '''Adds new songs to a playlist by updating the `songplaylist_map` table.
 
         Adds the songs given (as ids) to the playlist given (as key).
 
@@ -221,14 +221,14 @@ class Database(object):
         '''
         with self.conn.cursor() as curr:
             for song_id in songs:
-                curr.execute('''INSERT INTO spmap (playlist_id, song_id) VALUES
+                curr.execute('''INSERT INTO songplaylist_map (playlist_id, song_id) VALUES
                                 (%s, %s);''', (key, song_id))
             self.conn.commit()
         return self.get_playlist(key)
 
     @handle_db_exception
     def remove_songs_from_playlist(self, key, songs):
-        '''Removes songs from playlist by updating the `spmap` table.
+        '''Removes songs from playlist by updating the `songplaylist_map` table.
 
         Removes the songs given (as ids) from the playlist given (as key).
 
@@ -241,7 +241,7 @@ class Database(object):
         '''
         with self.conn.cursor() as curr:
             for song_id in songs:
-                curr.execute('''DELETE FROM spmap WHERE
+                curr.execute('''DELETE FROM songplaylist_map WHERE
                                 song_id=%s AND playlist_id=%s;''',
                              (song_id, key))
             self.conn.commit()
