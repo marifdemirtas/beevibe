@@ -73,6 +73,11 @@
                 <td><input id="new_artist" type="text" name="new_artist" placeholder="Artist"></td>
                 <td><input id="new_album" type="text" name="new_album" placeholder="Album"></td>
                 <td><input id="new_duration" type="text" name="new_duration" placeholder="Duration"></td>
+                <td><select id="new_release_year" name="new_release_year" placeholder="Release year" required="">
+                    {%for year in range(1600, 2021)%}
+                    <option value="{{year}}">Released on: {{year}}</option>
+                    {%endfor%}
+                </select></td>
                 </form>
             </tr>
             <tr>

@@ -27,11 +27,13 @@
                     <td>Album</td>
                     <td>Duration</td>
                     <td>Comments</td>
+                    <td>Release Year</td>
                 </tr>
             </thead>
             <tbody>
             {% for song in playlist %}
                 <tr>
+                    {{song}}
                     <td>{{ song["title"] }}</td>
                     <td>{{ song["artist"] }}</td>
                     <td>{{ song["album"] }}</td>

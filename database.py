@@ -72,7 +72,7 @@ class Database(object):
                 playlist = None
             else:
                 with self.conn.cursor() as curr:
-                    curr.execute('''SELECT songs.song_id, songs.title, songs.artist, songs.album, songs.duration, spmap.song_description
+                    curr.execute('''SELECT songs.song_id, songs.title, songs.artist, songs.album, songs.duration, songs.release_year, spmap.song_description
                                     FROM (spmap INNER JOIN songs ON songs.song_id = spmap.song_id)
                                     WHERE spmap.playlist_id=%s;''', (playlist.id,))
                     songs = curr.fetchall()
@@ -303,9 +303,9 @@ class Database(object):
             curr.execute("SELECT song_id FROM songs WHERE title=%s AND artist=%s AND album=%s;", (song.title, song.artist, song.album))
             song_id = curr.fetchone()
             if not song_id:
-                curr.execute('''INSERT INTO songs (title, artist, album, duration) VALUES
-                                (%s, %s, %s, %s) RETURNING song_id;''',
-                                (song.title, song.artist, song.album, song.duration))
+                curr.execute('''INSERT INTO songs (title, artist, album, duration, release_year) VALUES
+                                (%s, %s, %s, %s, %s) RETURNING song_id;''',
+                                (song.title, song.artist, song.album, song.duration, song.release_year))
                 song.s_id(curr.fetchone()[0])
                 self.conn.commit()
             else:

@@ -3,12 +3,14 @@ from flask_login import UserMixin
 
 
 class User(UserMixin):
-    def __init__(self, s_id, username, email, password):
+    def __init__(self, s_id, username, email, password, public=True, register_date=None):
         self.username = username
         self.password = password
         self.id = s_id
         self.email = email
         self.active = True
+        self.public = public
+        self.register_date = None
 
     def get_id(self):
         return self.username

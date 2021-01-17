@@ -1,6 +1,7 @@
 from flask import render_template, current_app, abort, url_for, request, redirect, Response, flash
 from flask_login import current_user, login_user, logout_user, login_required
 from hashlib import sha256
+from datetime import datetime
 import json
 import colour
 
@@ -236,7 +237,7 @@ def add_song(key):
     if not current_app.config['db'].check_auth(current_user.id, key):
         return abort(403)
     song = Song(request.form["new_song"], request.form["new_artist"],
-                request.form["new_album"], request.form["new_duration"])
+                request.form["new_album"], request.form["new_duration"], request.form["new_release_year"])
     song = current_app.config["db"].add_song_to_database(song)
     try:
         current_app.config["db"].add_songs_to_playlist(int(key), [song.id])
@@ -324,7 +325,7 @@ def register():
             if current_app.config['db'].get_user_by_email(form.email.data):
                 form.email.errors.append("This email is already registered.")
             else:
-                user = User(None, form.username.data, form.email.data, sha256(form.password.data.encode('utf-8')).hexdigest())
+                user = User(None, form.username.data, form.email.data, sha256(form.password.data.encode('utf-8')).hexdigest(), form.public.data, datetime.now.year())
                 user = current_app.config['db'].register_user(user)
                 login_user(user)
                 next_page = request.args.get("next", url_for("index"))

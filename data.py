@@ -21,12 +21,13 @@ class Song(object):
         duration: length of the song in seconds
     '''
 
-    def __init__(self, title, artist, album, duration):
+    def __init__(self, title, artist, album, duration, release_year):
         self.id = None
         self.title = title
         self.artist = artist
         self.album = album
         self.duration = duration
+        self.release_year = release_year
 
     def __iter__(self):
         return iter((self.id, self.title,
