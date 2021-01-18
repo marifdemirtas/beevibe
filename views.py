@@ -34,7 +34,7 @@ def rand_playlist():
 @error_direction
 def featured():
     featured, avg_playlists = current_app.config["db"].get_featured_playlists()
-    return render_template("list-playlist.html", playlists=featured, avg_playlists=avg_playlists/60)
+    return render_template("list-playlist.html", playlists=featured, avg_playlists=avg_playlists)
 
 @login_required
 @error_direction
@@ -90,15 +90,16 @@ def public_profile(key):
 def playlist(key):
     playlist = current_app.config["db"].get_playlist(int(key))
     # validate
-    current_app.logger.debug(playlist.page.password)
+    current_app.logger.debug("checkpoint 1")
     if playlist is None:
         return abort(404)
-    #    playlist = current_app.config["db"].get_playlist(key)
+    current_app.logger.debug("checkpoint 2")
     if playlist.page.password is not None:
         if current_user.is_authenticated and (current_user.username == playlist.creator):
             pass
         else:
             return redirect(url_for("get_password_for", key=key))
+    current_app.logger.debug("checkpoint 3")
     return render_template("playlist.html", playlist=playlist)
 
 
@@ -180,10 +181,9 @@ def playlist_add():
                             descr=form.descr.data)
         playlist.page.set_color(form.color.data.hex)
         playlist.page.set_commenting(form.commenting.data)
-        current_app.logger.debug(form.privacy.data)
         playlist.page.set_password(form.privacy.data)
-        current_app.logger.debug(playlist.page.password)
-        current_app.logger.debug(playlist.page.password is None)
+        current_app.logger.debug(form.date.data)
+        playlist.page.set_expiration(_datetime.datetime.now() + _datetime.timedelta(days=form.date.data))
         if 'image' in request.files:
             image = request.files['image'].read()
             playlist.metadata.set_thumbnail(image)
@@ -383,6 +383,8 @@ def delete_user(key):
 #@error_direction
 def search_page():
     current_app.logger.debug(request.form)
+    if request.form['query'] == "":
+        return redirect(url_for('featured'))
     results = current_app.config['db'].search_playlists_by_title(request.form['query'])
     current_app.logger.debug(results)
     return render_template("list-playlist.html", playlists=results, search=request.form["query"])

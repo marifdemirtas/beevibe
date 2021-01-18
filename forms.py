@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Optional, Length, Email
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, IntegerField
+from wtforms.validators import DataRequired, Optional, Length, Email, NumberRange
 from flask_wtf.file import FileField, FileAllowed
 from wtforms_components import ColorField
 
@@ -25,6 +25,7 @@ class CreatePlaylistForm(FlaskForm):
     image = FileField("Thumbnail image (optional)", validators=[Optional(), FileAllowed(['jpg','jpeg','png'], 'Please upload a .jpg or .png file.')])
     color = ColorField('Background color: ', id="playlist_color")
     privacy = PasswordField('Playlist password (optional):', validators=[Optional()])
+    date = IntegerField('Delete this playlist after number of days (optional):', validators=[NumberRange(min=1, max=15, message="Expirable playlists cannot be hosted longer than 15 days or shorter than 1 day."), Optional()])
     commenting = BooleanField('Allow comments: ')
     submit = SubmitField('Create')
 

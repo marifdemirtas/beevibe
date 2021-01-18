@@ -30,7 +30,7 @@
     <p><center>Search results for <strong>{{search}}</strong> are being shown. </center></p>
     {% else %}
     <p><center><strong>Start listening with these playlists, selected for you.</strong></center></p>
-        <p>Average length of a playlist shown here is {{"%.2f"|format(avg_playlists)}} minutes.</p>    
+        <p>Average length of a playlist shown here is {{"%.2f"|format(avg_playlists / 60)}} minutes.</p>    
     {% endif %}
 {% endif %}
 {% endblock %}

@@ -511,7 +511,10 @@ class Database(object):
                             ((playlists INNER JOIN songplaylist_map ON songplaylist_map.playlist_id=playlists.playlist_id)
                             INNER JOIN songs ON songplaylist_map.song_id=songs.song_id)
                             WHERE playlists.creator_id=%s''', (user_id,))
-            return curr.fetchone()[0]
+            res = curr.fetchone()[0]
+            if res is None:
+                res = 0
+            return res
 
     @handle_db_exception
     def get_total_duration_of_playlist(self, playlist_id):
@@ -520,7 +523,10 @@ class Database(object):
                             ON songplaylist_map.playlist_id=playlists.playlist_id)
                             INNER JOIN songs ON songplaylist_map.song_id=songs.song_id) WHERE playlists.playlist_id=%s;
                         ''', (playlist_id,))
-            return curr.fetchone()[0]
+            res = curr.fetchone()[0]
+            if res is None:
+                res = 0
+            return res
 
 
     @handle_db_exception
@@ -535,7 +541,10 @@ class Database(object):
                             INNER JOIN songs ON songplaylist_map.song_id=songs.song_id) WHERE playlists.playlist_id=%s)
                             ) AS united;
                             ''', (id1.id, id2.id, id3.id))
-            return curr.fetchone()[0]
+            res = curr.fetchone()[0]
+            if res is None:
+                res = 0
+            return res
 
     #for finding common songs
     @handle_db_exception

@@ -8,24 +8,24 @@
             {{form.title.label}}<br>
             {{form.title(size=32)}}
         </h1>{% for error in form.title.errors %}
-        <span style="color: red;">[{{ error }}]</span>
+        <span style="color: red;">Warning: {{ error }}</span>
         {%endfor%}   
         <h2>Created by {{current_user.username}}</h2>
         <p>
             {{form.image.label}}<br>
             {{form.image()}}
         {% for error in form.image.errors %}
-        <span style="color: red;">[{{ error }}]</span>
+        <span style="color: red;">Warning: {{ error }}</span>
         {%endfor%}</p>
         <p>
             {{form.descr.label}}<br>
             {{form.descr()}}
         {% for error in form.descr.errors %}
-        <span style="color: red;">[{{ error }}]</span>
+        <span style="color: red;">Warning: {{ error }}</span>
         {%endfor%}</p>
         <p id="color_descr">{{form.color.label}}
         {{form.color}}{% for error in form.color.errors %}
-        <span style="color: red;">[{{ error }}]</span>
+        <span style="color: red;">Warning: {{ error }}</span>
         {%endfor%}</p>
         <p> {{form.commenting.label}}<br>
             {{form.commenting()}}
@@ -33,7 +33,13 @@
         <p>
             {{form.privacy.label}}<br>
             {{form.privacy()}}{% for error in form.privacy.errors %}
-        <span style="color: red;">[{{ error }}]</span>
+        <span style="color: red;">Warning: {{ error }}</span>
+        {%endfor%}
+        </p>
+        <p>
+            {{form.date.label}}<br>
+            {{form.date()}}{% for error in form.date.errors %}
+        <span style="color: red;">Warning: {{ error }}</span>
         {%endfor%}
         </p>
         <p>{{form.submit()}}</p>
@@ -47,13 +53,13 @@
             {{import_form.uri.label}}<br>
             {{import_form.uri()}}
         {% for error in import_form.uri.errors %}
-        <span style="color: red;">[{{ error }}]</span>
+        <span style="color: red;">Warning: {{ error }}</span>
         {%endfor%}</p>
         <p>
             {{import_form.file.label}}<br>
             {{import_form.file()}}
         {% for error in import_form.file.errors %}
-        <span style="color: red;">[{{ error }}]</span>
+        <span style="color: red;">Warning: {{ error }}</span>
         {%endfor%}</p>
         <p>{{import_form.import_btn()}}</p>
        </form>
