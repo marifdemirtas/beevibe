@@ -22,24 +22,24 @@
           <li class="nav-item"><a class="nav-link" href="{{ url_for('login')}}">Login</a></li>
           {% endif %}
         </ul>
-      <form class="form-inline my-2 my-lg-0 search">
-          <input class="form-control mr-sm-2" id="search-input" type="search" placeholder="Search" aria-label="Search" list="search-results">
+      <form class="form-inline my-2 my-lg-0 search" action="{{ url_for('search_page') }}" method="POST">
+          <input class="form-control mr-sm-2" id="search-input" type="search" placeholder="Look for playlists" aria-label="Search" list="search-results" name="query">
           <ul class="list-group" id="search-results"></ul>
-      </form>
           <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+      </form>
         </form>
       </div>
     </nav>
 
 
     {% with mailbox = get_flashed_messages() %}
-    {% if mailbox %}
-    <div><ul>{% for message in mailbox %}
-    <li>{{message}}</li>
-    {% endfor %}
-    </ul></div>
-    {% endif %}
-    {% endwith %}
+      {% if mailbox %}
+      <div class="mailbox text-center"><ul style="list-style-type: none;">{% for message in mailbox %}
+      <li>{{message}}</li>
+      {% endfor %}
+      </ul></div>
+      {% endif %}
+      {% endwith %}
     {% block content %}{% endblock %}
   </body>
   {% block script %}{% endblock %}

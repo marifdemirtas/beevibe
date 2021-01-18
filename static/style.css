@@ -2,12 +2,20 @@ body{
     background-image: url(https://cdn.pixabay.com/photo/2016/08/26/15/14/music-notes-1622424_960_720.jpg); 
 }
 
+h1, h2{
+    color: #5e82a1;
+}
+
 .jumbotron{
     margin: 2em auto;
 }
 
 .playlist-container{
     background-color: lightgray;
+    margin-top: 3em;
+    padding: 4em;
+    padding-top: 2em;
+    border-radius: 5px; 
 }
 
 .search{
@@ -16,6 +24,23 @@ body{
 
 #search-input:focus + #search-results{
     display: block;
+    z-index:0;
+}
+
+thead{
+    font-weight: 900;
+}
+
+.mailbox{
+    margin: 2em auto;
+    width: 50%;
+    background: #d00;
+    color: white;
+    font-weight: 900;
+    padding: 0.5em;
+    border-radius: 5px;
+    border: black;
+    border: 5px solid red;
 }
 
 #search-results{
@@ -43,11 +68,6 @@ body{
     margin: 1em;
 }
 
-h1{
-    color:blue;
-}
-
-
 .login-box{
     margin: 1em auto;
 }
@@ -61,4 +81,6 @@ h1{
     background-color: white;
     border-radius: 3px;
     border:2px solid black;
+    width: 70%,
+    padding: 2em;
 }

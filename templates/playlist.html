@@ -19,25 +19,26 @@
             {% endif %}
         </div>
         {% endif %}
-        <table class="table" style="color: inherit">
+        <p>Total duration: {{"%.2f"|format(playlist.total_duration/60)}} minutes</p>
+        <table class="table table-striped table-hover" style="color: inherit">
             <thead>
                 <tr>
                     <td>Song</td>
                     <td>Artist</td>
                     <td>Album</td>
                     <td>Duration</td>
-                    <td>Comments</td>
                     <td>Release Year</td>
+                    <td>Comments</td>
                 </tr>
             </thead>
             <tbody>
             {% for song in playlist %}
                 <tr>
-                    {{song}}
                     <td>{{ song["title"] }}</td>
                     <td>{{ song["artist"] }}</td>
                     <td>{{ song["album"] }}</td>
                     <td>{{ song["duration"] }}</td>
+                    <td>{{ song["release_year"] }}</td>
                     {% if playlist.song_descr[song["id"]] %}
                     <td>{{playlist.song_descr[song["id"]]}}</td>
                     {% else %}
@@ -47,11 +48,12 @@
             {% endfor %}
             </tbody>
         </table>
+        <a href="{{url_for('export', key=playlist.id)}}"  style="float:right; margin-left: 1em; margin-bottom: 1em;"><button class="btn btn-warning">Export</button></a>
         {% if current_user.username == playlist.creator %}
-        <a href="{{url_for('playlist_edit', key=playlist.id)}}" class="btn btn-info">Edit</a>
+        <a href="{{url_for('playlist_edit', key=playlist.id)}}"  style="float:right; margin-left: 1em; margin-bottom: 1em;" class="btn btn-info">Edit</a>
         {% endif %}
         {% if playlist.page.commenting%}
-        <table class="table" style="color: inherit">
+        <table class="table table-striped table-hover" style="color: inherit">
             {% if playlist.comments|length > 0 %}
             <thead>
                 <td>Author</td>
@@ -70,13 +72,12 @@
             <tr>
                 <form class="form-control" method="POST" action="{{url_for('add_comment', key=playlist.id)}}">
                 <td>{{current_user.username}}: </td>
-                <td><input type="text" name="content">What do you think? </input></td>
-                <td><button class="btn-success">Submit</button></td>
+                <td><input type="text" name="content" placeholder="What do you think?"></input></td>
+                <td><button class="btn btn-success">Submit</button></td>
                 </form>
             </tr>
             {% endif %}
         </table>
         {% endif %}
-        <a href="{{url_for('export', key=playlist.id)}}"><button class="btn btn-lg btn-success">Export</button></a>
     </div>
 {% endblock %}

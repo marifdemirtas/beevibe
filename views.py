@@ -1,7 +1,7 @@
 from flask import render_template, current_app, abort, url_for, request, redirect, Response, flash
 from flask_login import current_user, login_user, logout_user, login_required
 from hashlib import sha256
-from datetime import datetime
+import _datetime
 import json
 import colour
 
@@ -33,32 +33,57 @@ def rand_playlist():
 
 @error_direction
 def featured():
-    featured = current_app.config["db"].get_featured_playlists()
-    return render_template("list-playlist.html", playlists=featured)
+    featured, avg_playlists = current_app.config["db"].get_featured_playlists()
+    return render_template("list-playlist.html", playlists=featured, avg_playlists=avg_playlists/60)
 
 @login_required
 @error_direction
 def profile():
+    form = ProfileUpdateForm()
     playlists = current_app.config["db"].get_playlists_by(current_user)
     stats = {'numplaylist': 5,
              'numsong': 30,
              'favartist': 'The Doors',
              'favsong': 'Riders on the Storm'}
+    if form.validate_on_submit():
+        current_app.config["db"].set_public_profile(current_user.id, form.privacy.data)
+        current_user.public = form.privacy.data
+    form.privacy.data = current_user.public
+    sum_playlists = current_app.config["db"].get_all_playlist_durations_user(current_user.id)
+    artists = current_app.config["db"].get_top_three_artists(current_user.id)
     return render_template("list-playlist.html",
                            playlists=playlists,
                            profile=current_user.username,
-                           stats=stats)
+                           sum_playlists=sum_playlists,
+                           artists=artists,
+                           form=form)
+
 
 @error_direction
 def public_profile(key):
+    if current_user.is_authenticated and current_user.id == int(key):
+        return redirect(url_for('user'))
+    if current_app.config["db"].is_user_private(int(key)):
+        return abort(403)
     playlists = current_app.config["db"].get_playlists_using_id(int(key))
+    if playlists is None:
+        return abort(403)
     stats = {'numplaylist': 5,
              'numsong': 30,
              'favartist': 'The Doors',
              'favsong': 'Riders on the Storm'}
+    sum_playlists = current_app.config["db"].get_all_playlist_durations_user(int(key))
+    artists = current_app.config["db"].get_top_three_artists(int(key))
+    if current_user.is_authenticated:
+        common_songs = current_app.config["db"].get_common_songs(int(key), current_user.id)
+    else:
+        common_songs=None
     return render_template("list-playlist.html",
                            playlists=playlists,
                            profile=current_app.config["db"].get_username(int(key)),
+                           sum_playlists=sum_playlists,
+                           artists=artists,
+                           common_songs=common_songs,
                            stats=stats)
 
 @error_direction
@@ -106,11 +131,12 @@ def get_dict_from_spotify(key):
             'creator': current_user.username,
             'description': pl['description'] + ", originally by " + pl['owner']['display_name'],
             'songs': [(Song(s['track']['name'], s['track']['artists'][0]['name'],
-                            s['track']['album']['name'], int(s['track']['duration_ms']/1000)), None) 
+                            s['track']['album']['name'], int(s['track']['duration_ms']/1000), s['track']['album']['release_date'][:4]), None)
                       for s in pl['tracks']['items']]
         }
         return ps
-    except:
+    except Exception as e:
+        flash("Import unsuccessful.")
         return None
 
 
@@ -119,12 +145,12 @@ def import_from(ps):
                         creator=ps['creator'],
                         descr=ps['description'])
     playlist = current_app.config["db"].add_playlist(playlist)
-    for song in ps['songs']:
+    for song in ps['songs'][:25]:
         song = current_app.config["db"].add_song_to_database(song[0]) #modify spotify exports to fit with file exports
         try:
-            current_app.config["db"].add_songs_to_playlist(playlist.id, [song.id])
+            current_app.config["db"].add_song_to_playlist(playlist.id, song.id)
         except DuplicateError as e:
-            pass
+            continue
 
     return redirect(url_for("playlist", key=playlist.id))
 
@@ -167,15 +193,15 @@ def playlist_add():
         f = import_form.file.data
         if f is not None:
             try:
-                import_from(json.loads(f.stream.read()))
+                return import_from(json.loads(f.stream.read()))
             except Exception as e:
-                current_app.logger.debug(e)
+                flash("Import unsuccessful.")
                 import_form.file.errors.append("Invalid file.")
         else:
-            temp = import_from(get_dict_from_spotify(import_form.uri.data.split(':')[-1]))
-            if temp is not None:
-                return temp
-            else:
+#            current_app.logger.debug()
+            try:
+                return import_from(get_dict_from_spotify(import_form.uri.data.split(':')[-1]))
+            except:
                 import_form.uri.errors.append("URI not found.")
     return render_template("playlist-add.html", form=form, import_form=import_form)
 
@@ -202,14 +228,14 @@ def playlist_edit(key):
         current_app.logger.debug(form.color.data)
         current_app.logger.debug(form.color.data.hex)
         form.commenting.data = playlist.page.commenting
-        return render_template("playlist_edit.html", playlist=playlist, form=form)
+        return render_template("playlist-edit.html", playlist=playlist, form=form)
 
 
-@error_direction
 def delete_comment(key):
     if not current_app.config['db'].check_auth(current_user.id, int(key)):
         return abort(403)
-    comments = [int(cid) for cid in comment_ids]
+    current_app.logger.debug(request.form)
+    comments = [int(cid[0]) for cid in request.form]
     current_app.config["db"].remove_comments_from_playlist(int(key), comments)
     return redirect(url_for("playlist_edit", key=key))
 
@@ -240,7 +266,7 @@ def add_song(key):
                 request.form["new_album"], request.form["new_duration"], request.form["new_release_year"])
     song = current_app.config["db"].add_song_to_database(song)
     try:
-        current_app.config["db"].add_songs_to_playlist(int(key), [song.id])
+        current_app.config["db"].add_song_to_playlist(int(key), song.id, request.form["new_song_descr"])
     except DuplicateError as e:
         flash("Song already in playlist.")
         current_app.logger.debug("Song already in playlist.")
@@ -303,7 +329,7 @@ def login():
             login_user(user)
             next_page = request.args.get("next", url_for("index"))
             return redirect(next_page)
-        flash("Login unsuccessful")
+        form.password.errors.append("Wrong username or password.")
         return render_template('login.html', form=form)
     if current_user.is_authenticated:
         return abort(403)
@@ -325,7 +351,8 @@ def register():
             if current_app.config['db'].get_user_by_email(form.email.data):
                 form.email.errors.append("This email is already registered.")
             else:
-                user = User(None, form.username.data, form.email.data, sha256(form.password.data.encode('utf-8')).hexdigest(), form.public.data, datetime.now.year())
+                user = User(None, form.username.data, form.email.data, sha256(form.password.data.encode('utf-8')).hexdigest(), form.public.data, _datetime.date.today())
+                current_app.logger.debug(user.register_date)
                 user = current_app.config['db'].register_user(user)
                 login_user(user)
                 next_page = request.args.get("next", url_for("index"))
@@ -333,6 +360,7 @@ def register():
         else:
             form.username.errors.append("This nickname is already registered.")
         return render_template('register.html', form=form)
+    form.public.data = True
     return render_template('register.html', form=form)
 
 
@@ -342,3 +370,19 @@ def page_not_found(e):
 
 def page_forbidden(e):
     return render_template('forbidden.html'), 403
+
+
+@login_required
+@error_direction
+def delete_user(key):
+    logout_user()
+    current_app.config["db"].delete_user(key)
+    return redirect(url_for("index"))
+
+
+#@error_direction
+def search_page():
+    current_app.logger.debug(request.form)
+    results = current_app.config['db'].search_playlists_by_title(request.form['query'])
+    current_app.logger.debug(results)
+    return render_template("list-playlist.html", playlists=results, search=request.form["query"])

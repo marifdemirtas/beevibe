@@ -13,7 +13,7 @@
             <p id="welcome-desc">BeeVibe helps you create and share personalized playlists.</p>
             <div class="btn-group" role="group">
                 <!--<a href="{{ url_for('random') }}"><button type="button" href="/" class="btn btn-primary">Go to a random playlist!</button></a>-->
-                <a href="{{ url_for('playlist', key=playlist.id) }}"><button type="button" href="/" class="btn btn-primary">Go to the featured playlist!</button></a>
+                <a href="{{ url_for('playlist', key=playlist.id) }}"><button type="button" href="/" class="btn btn-primary" style="margin-right: 20px;">Go to the featured playlist!</button></a>
                 <a href="{{ url_for('playlist_add')}}"><button type="button" class="btn btn-primary">Create your playlist now!</button></a>
             </div>
         </div>
@@ -31,7 +31,7 @@
         roundRect(ctx, 0, 0, canvas.width, canvas.height);
         ctx.globalCompositeOperation = 'source-atop';
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        ctx.font = "italic bold 50px fantasy";
+        ctx.font = "italic bold 50px sans";
         ctx.fillStyle = "{{playlist.page.text_color}}";
         ctx.fillText(title, 100, 120);
     };

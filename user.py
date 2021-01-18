@@ -10,7 +10,7 @@ class User(UserMixin):
         self.email = email
         self.active = True
         self.public = public
-        self.register_date = None
+        self.register_date = register_date
 
     def get_id(self):
         return self.username

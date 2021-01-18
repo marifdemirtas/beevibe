@@ -8,21 +8,22 @@
     <p>{{form.username.label}}<br>
        {{form.username(size=32)}}
         {% for error in form.username.errors %}
-        <span style="color: red;">[{{ error }}]</span>
+        <p style="color: red;">Warning: {{ error }}</p>
         {%endfor%}
         </p>
     <p>{{form.email.label}}<br>
        {{form.email(size=32)}}
         {% for error in form.email.errors %}
-        <span style="color: red;">[{{ error }}]</span>
+        <p style="color: red;">Warning: {{ error }}</p>
         {%endfor%}
         </p>
     <p>{{form.password.label}}<br>
        {{form.password(size=32)}}
        {% for error in form.password.errors %}
-        <span style="color: red;">[{{ error }}]</span>
+        <p style="color: red;">Warning: {{ error }}</p>
         {%endfor%}
         </p>
+    <p>{{form.public.label}}: {{form.public()}}</p>
     <p>{{form.submit()}}</p>
     </div>
 </form>    

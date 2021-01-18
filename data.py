@@ -31,7 +31,7 @@ class Song(object):
 
     def __iter__(self):
         return iter((self.id, self.title,
-                     self.artist, self.album, self.duration))
+                     self.artist, self.album, self.duration, self.release_year))
 
     def to_dict(self):
         song = {
@@ -39,7 +39,8 @@ class Song(object):
             "title": self.title,
             "artist": self.artist,
             "album": self.album,
-            "duration": self.duration
+            "duration": self.duration,
+            "release_year": self.release_year
         }
         return song
 
@@ -78,6 +79,8 @@ class Playlist(object):
         self.size = 0
         self.page = PlaylistPage()
         self.comments = []
+
+        self.total_duration = 0
 
         self.metadata = Metadata()
         self.metadata.set_descr(descr)

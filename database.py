@@ -80,14 +80,16 @@ class Database(object):
                         song = Song(*song_t[1:-1])
                         song.s_id(song_t[0])
                         playlist.add(song, song_t[-1])
-                    curr.execute('''SELECT comments.content, users.nickname, comments.publish_date
+                    curr.execute('''SELECT comments.comment_id, comments.content, users.nickname, comments.publish_date
                                     FROM ((comments INNER JOIN playlists ON comments.playlist_id = playlists.playlist_id)
                                     INNER JOIN users ON comments.author_id = users.user_id)
                                     WHERE playlists.playlist_id=%s;''', (playlist.id,))
                     comments = curr.fetchall()
                     for comment_t in comments:
-                        comment = Comment(*comment_t)
+                        comment = Comment(*comment_t[1:])
+                        comment.id = comment_t[0]
                         playlist.add_comment(comment)
+            playlist.total_duration = self.get_total_duration_of_playlist(playlist.id)
         return playlist
 
     @handle_db_exception
@@ -156,7 +158,7 @@ class Database(object):
         '''
         ret_songs = []
         with self.conn.cursor() as curr:
-            curr.execute("SELECT * FROM songs WHERE title LIKE %s;", (title + '%',))
+            curr.execute("SELECT * FROM songs WHERE title ILIKE %s;", (title + '%',))
             for song in curr.fetchmany(5):
                 ret_songs.append(Song(*song[1:]))
                 ret_songs[-1].s_id(song[0])
@@ -175,7 +177,7 @@ class Database(object):
         with self.conn.cursor() as curr:
             curr.execute('''SELECT playlists.playlist_id, playlists.title, users.nickname FROM playlists
                             INNER JOIN users ON users.user_id=playlists.creator_id
-                            WHERE users.nickname LIKE %s;''', (creator + '%',))
+                            WHERE users.nickname ILIKE %s;''', (creator + '%',))
             return [corePlaylist(*row) for row in curr.fetchmany(5)]
 
 
@@ -207,22 +209,25 @@ class Database(object):
         return self.get_playlist(playlist.id)
 
     @handle_db_exception
-    def add_songs_to_playlist(self, key, songs):
+    def add_song_to_playlist(self, key, song, descr=None):
         '''Adds new songs to a playlist by updating the `songplaylist_map` table.
 
         Adds the songs given (as ids) to the playlist given (as key).
 
         Args:
             key (int): Playlist id that songs will be added.
-            songs (list[int]): List of song ids.
+            songs (int): Song id.
 
         Returns:
             playlist (Playlist object): The updated playlist.
         '''
         with self.conn.cursor() as curr:
-            for song_id in songs:
+            if descr:
+                curr.execute('''INSERT INTO songplaylist_map (playlist_id, song_id, song_description) VALUES
+                                (%s, %s, %s);''', (key, song, descr))
+            else:
                 curr.execute('''INSERT INTO songplaylist_map (playlist_id, song_id) VALUES
-                                (%s, %s);''', (key, song_id))
+                                (%s, %s);''', (key, song))
             self.conn.commit()
         return self.get_playlist(key)
 
@@ -244,6 +249,11 @@ class Database(object):
                 curr.execute('''DELETE FROM songplaylist_map WHERE
                                 song_id=%s AND playlist_id=%s;''',
                              (song_id, key))
+                curr.execute('''SELECT * FROM songplaylist_map WHERE
+                                song_id=%s;''', (song_id,))
+                if curr.fetchone() is None:  # delete song from database since no one is referring to it
+                    curr.execute('''DELETE FROM songs WHERE
+                                    song_id=%s''', (song_id,))
             self.conn.commit()
         return self.get_playlist(key)
 
@@ -281,9 +291,11 @@ class Database(object):
         Returns:
             playlist (Playlist object): The updated playlist.
         '''
-        for comment in comment_id:
-            pass
-        return self.playlists[key]
+        with self.conn.cursor() as curr:
+            for comment in comment_id:
+                curr.execute("DELETE FROM comments WHERE comment_id=%s", (comment,))
+            self.conn.commit()
+        return self.get_playlist(key)
 
     @handle_db_exception
     def add_song_to_database(self, song):
@@ -341,7 +353,8 @@ class Database(object):
         with self.conn.cursor() as curr:
             curr.execute("SELECT playlist_id FROM playlists WHERE privacy IS NULL;")
             playlists = [self.get_playlist(key) for key in random.sample(curr.fetchall(), n)]
-            return playlists
+            avg_playlist = self.get_featured_playlist_duration_avg(*playlists)
+            return playlists, avg_playlist
 
 
     @handle_db_exception
@@ -372,9 +385,8 @@ class Database(object):
             playlists (list[Playlist]): Playlists created by that user.
         '''
         with self.conn.cursor() as curr:
-            curr.execute('''SELECT playlists.playlist_id
-                            FROM (users INNER JOIN playlists ON playlists.creator_id = users.user_id)
-                            WHERE users.user_id=%s;''', (user_id,))
+            curr.execute('''SELECT playlist_id
+                            FROM playlists WHERE creator_id=%s;''', (user_id,))
             playlists = [self.get_playlist(key) for key in curr.fetchall()]
         return playlists
 
@@ -421,6 +433,16 @@ class Database(object):
             curr.execute("SELECT * FROM users WHERE email=%s;", (email,))
             return curr.fetchone()
 
+    @handle_db_exception
+    def delete_user(self, user_id):
+        '''Delete user
+
+        Args:
+            user_id (int): ID of user.
+        '''
+        with self.conn.cursor() as curr:
+            curr.execute("DELETE FROM users WHERE user_id=%s;", (user_id,))
+            self.conn.commit()
 
     @handle_db_exception
     def register_user(self, user):
@@ -433,7 +455,7 @@ class Database(object):
             user (User object): User with updated id.
         '''
         with self.conn.cursor() as curr:
-            curr.execute("INSERT INTO users (nickname, email, password) VALUES (%s,%s,%s) RETURNING user_id;", (user.username, user.email, user.password))
+            curr.execute("INSERT INTO users (nickname, email, password, public, register_date) VALUES (%s,%s,%s,%s,%s) RETURNING user_id;", (user.username, user.email, user.password, user.public, user.register_date))
             user.id = curr.fetchone()[0]
             self.conn.commit()
         return user
@@ -456,3 +478,82 @@ class Database(object):
                 return True
             else:
                 return False
+
+    @handle_db_exception
+    def is_user_private(self, user_id):
+        '''Checks if user with given id has a private profile.
+
+        Args:
+            user_id (int): id of the user.
+
+        Returns:
+            bool: True if that user is private, False otherwise.
+        '''
+        with self.conn.cursor() as curr:
+            curr.execute("SELECT public FROM users WHERE user_id=%s;", (user_id,))
+            if curr.fetchone()[0] is True:
+                return False
+            else:
+                return True
+
+    @handle_db_exception
+    def set_public_profile(self, user_id, value):
+        '''Sets the user profile publicity to given value
+        '''
+        with self.conn.cursor() as curr:
+            curr.execute("UPDATE users SET public=%s WHERE user_id=%s;", (value, user_id,))
+            self.conn.commit()
+
+    @handle_db_exception
+    def get_all_playlist_durations_user(self, user_id):
+        with self.conn.cursor() as curr:
+            curr.execute('''SELECT SUM(songs.duration) FROM 
+                            ((playlists INNER JOIN songplaylist_map ON songplaylist_map.playlist_id=playlists.playlist_id)
+                            INNER JOIN songs ON songplaylist_map.song_id=songs.song_id)
+                            WHERE playlists.creator_id=%s''', (user_id,))
+            return curr.fetchone()[0]
+
+    @handle_db_exception
+    def get_total_duration_of_playlist(self, playlist_id):
+        with self.conn.cursor() as curr:
+            curr.execute('''SELECT SUM(songs.duration) FROM ((playlists INNER JOIN songplaylist_map 
+                            ON songplaylist_map.playlist_id=playlists.playlist_id)
+                            INNER JOIN songs ON songplaylist_map.song_id=songs.song_id) WHERE playlists.playlist_id=%s;
+                        ''', (playlist_id,))
+            return curr.fetchone()[0]
+
+
+    @handle_db_exception
+    def get_featured_playlist_duration_avg(self, id1, id2, id3):
+        with self.conn.cursor() as curr:
+            curr.execute('''SELECT AVG(united.sum) FROM (
+                            (SELECT SUM(songs.duration) FROM ((playlists INNER JOIN songplaylist_map ON songplaylist_map.playlist_id=playlists.playlist_id)
+                            INNER JOIN songs ON songplaylist_map.song_id=songs.song_id) WHERE playlists.playlist_id=%s) UNION 
+                            (SELECT SUM(songs.duration) FROM ((playlists INNER JOIN songplaylist_map ON songplaylist_map.playlist_id=playlists.playlist_id)
+                            INNER JOIN songs ON songplaylist_map.song_id=songs.song_id) WHERE playlists.playlist_id=%s) UNION
+                            (SELECT SUM(songs.duration) FROM ((playlists INNER JOIN songplaylist_map ON songplaylist_map.playlist_id=playlists.playlist_id)
+                            INNER JOIN songs ON songplaylist_map.song_id=songs.song_id) WHERE playlists.playlist_id=%s)
+                            ) AS united;
+                            ''', (id1.id, id2.id, id3.id))
+            return curr.fetchone()[0]
+
+    #for finding common songs
+    @handle_db_exception
+    def get_common_songs(self, user_id, current_id):
+        with self.conn.cursor() as curr:
+            curr.execute('''SELECT * FROM ((SELECT songs.title FROM ((playlists INNER JOIN songplaylist_map ON songplaylist_map.playlist_id=playlists.playlist_id)
+                            INNER JOIN songs ON songplaylist_map.song_id=songs.song_id) WHERE playlists.creator_id=%s) INTERSECT (SELECT songs.title FROM ((playlists INNER JOIN songplaylist_map ON songplaylist_map.playlist_id=playlists.playlist_id)
+                            INNER JOIN songs ON songplaylist_map.song_id=songs.song_id) WHERE playlists.creator_id=%s)) AS new_set;''', (user_id, current_id))
+            return curr.fetchall()
+
+    #for finding top 3 artists
+    @handle_db_exception
+    def get_top_three_artists(self, user_id):
+        '''Returns the top 3 artists in all of players playlists
+        '''
+        with self.conn.cursor() as curr:
+            curr.execute('''SELECT count(songs.title) as song_count, songs.artist 
+                            FROM ((playlists INNER JOIN songplaylist_map ON songplaylist_map.playlist_id=playlists.playlist_id)
+                            INNER JOIN songs ON songplaylist_map.song_id=songs.song_id)
+                            WHERE playlists.creator_id=%s GROUP BY songs.artist ORDER BY song_count DESC LIMIT 3;''', (user_id,))
+            return curr.fetchall()

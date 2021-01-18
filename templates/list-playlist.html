@@ -3,20 +3,34 @@
 {% else %}
 {% extends "list-layout.html" %}
 {% endif %}
-{% block title %} - {%if profile%}Profile{%else%}Featured Playlists{%endif%} {% endblock %}
+{% block title %} - {%if profile%}Profile{%else%}{%if search%}Search Results{%else%}Featured Playlists{%endif%}{%endif%} {% endblock %}
 {% block explanation %}
 {% if profile %}
     {% if profile == current_user.username%}
-    <h2><center><strong>Welcome to your profile, {{current_user.username}}.</strong></center></h2>
-    <center><a href="{{url_for('playlist_add')}}"><button class="btn btn-info">Create New Playlist</button></a></center>
+        <h2 style="margin: 1em;"><center><strong>Welcome to your profile, {{current_user.username}}.</strong></center></h2>
+        <p><italic>A BeeVibe member since <strong>{{current_user.register_date}}</strong></italic></p>
+        <a href="{{url_for('delete_user', key=current_user.id)}}"><button style="float: right; margin: 0 1em;" class="btn btn-danger">Delete Your Account</button></a>
+        <center><a href="{{url_for('playlist_add')}}"><button style="float: right;" class="btn btn-info">Create New Playlist</button></a></center>
+        <form method="POST">{{form.hidden_tag()}}
+        <p><strong>{{form.privacy.label}}</strong>  {{form.privacy()}}  {{form.submit()}}</p>
+        </form>
     {% else %}
-    <h2><center><strong>This is a list of playlists by {{profile}}.</strong></center></h2>
+    <h2 style="margin: 1em;"><center><strong>This is a list of playlists by {{profile}}.</strong></center></h2>
+        {%if current_user.is_authenticated%}
+            {% if common_songs|length > 0%}
+            <p><strong>You both love the songs:</strong> {%for song in common_songs%}{{song[0]}} - {%endfor%} and possibly more...</p>
+            {% endif %}
+        {%endif%}
     {% endif %}
-    <p>Number of playlists: {{stats['numplaylist']}}</p>    
-    <p>Number of songs: {{stats['numsong']}}</p>    
-    <p>Favourite artist: {{stats['favartist']}}</p>    
-    <p>Favourite song: {{stats['favsong']}}</p>
+    {% if artists|length > 0%}
+        <p><strong>Favourite Artists</strong> {% for artist in artists %} - {{artist[1]}} {% endfor %}</p>
+    {%endif%}
 {% else %}
-<p><strong><center>Start listening with these playlists, selected for you.</strong></center></p>
+    {%if search%}
+    <p><center>Search results for <strong>{{search}}</strong> are being shown. </center></p>
+    {% else %}
+    <p><center><strong>Start listening with these playlists, selected for you.</strong></center></p>
+        <p>Average length of a playlist shown here is {{"%.2f"|format(avg_playlists)}} minutes.</p>    
+    {% endif %}
 {% endif %}
 {% endblock %}

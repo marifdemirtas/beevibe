@@ -7,6 +7,9 @@
                    color: {{playlist.page.text_color}}"
         {% endif %}
         >
+        <div style="position: absolute;">
+        <a href="{{url_for('playlist', key=playlist.id)}}"><button class="btn btn-outline-danger btn-sm" style="float: right;">Go back</button></a>
+        </div>
         <h1>{{playlist.title}}</h1>   
         <h2>Created by {{playlist.creator}}</h2>
         {% if playlist.metadata.status %}
@@ -20,22 +23,21 @@
         </div>
         <div>
             <form method="POST">
+                {{form.hidden_tag()}}
             <p>
                 {{form.descr.label}}<br>
                 {{form.descr()}}
             </p>
             <p>
-                {{form.color.label}}<br>
-                {{form.color()}}
+                {{form.color.label}}   {{form.color()}}
             </p>
-            <p> {{form.commenting.label}}<br>
-                {{form.commenting()}}
+            <p> {{form.commenting.label}}   {{form.commenting()}}
             </p>
             <p>{{form.submit()}}</p>
             </form>
         </div>
         {% endif %}
-        <table class="table" style="color: inherit">
+        <table class="table table-striped" style="color: inherit">
             <thead>
                 <tr>
                     <td>Mark to delete</td>
@@ -50,62 +52,70 @@
             <form action="{{url_for('remove_song', key=playlist.id)}}" method="POST">
             {% for song in playlist %}
                 <tr>
-                    <td><input type="checkbox" name="{{song['id']}}" value="{{song['id']}}">Delete</td>
+                    <td><input type="checkbox" name="{{song['id']}}" value="{{song['id']}}"></td>
                     <td>{{ song["title"] }}</td>
                     <td>{{ song["artist"] }}</td>
                     <td>{{ song["album"] }}</td>
                     <td>{{ song["duration"] }}</td>
-                    {% if song["id"] in playlist.song_descr %}
+                    {% if playlist.song_descr[song["id"]] %}
                     <td>{{playlist.song_descr[song["id"]]}}</td>
+                    {% else %}
+                    <td></td>
                     {% endif %}
                 </tr>
             {% endfor %}
-            <button> Delete songs </button>
+            <button class="btn btn-warning" style="margin: 1em auto;"> Delete marked songs </button>
             </form>
         </tbody>
         </table>
-
+        <p>Add a new song:</p>
         <table class="table">
-            <tr>
-                <form method="POST" action="{{url_for('add_song', key=playlist.id)}}">
-                <td><button id="add_song">Add</button></td>
-                <td><input id="new_song" type="text" name="new_song" placeholder="Song title"></td>
-                <td><input id="new_artist" type="text" name="new_artist" placeholder="Artist"></td>
-                <td><input id="new_album" type="text" name="new_album" placeholder="Album"></td>
-                <td><input id="new_duration" type="text" name="new_duration" placeholder="Duration"></td>
-                <td><select id="new_release_year" name="new_release_year" placeholder="Release year" required="">
-                    {%for year in range(1600, 2021)%}
-                    <option value="{{year}}">Released on: {{year}}</option>
-                    {%endfor%}
-                </select></td>
-                </form>
+            <form method="POST" action="{{url_for('add_song', key=playlist.id)}}">
+                <tbody>
+                    <tr>
+                        <td rowspan="2"><button class="btn btn-success" id="add_song">Add</button></td>
+                        <td><input id="new_song" type="text" name="new_song" placeholder="Song title" required=""></td>
+                        <td><input id="new_artist" type="text" name="new_artist" placeholder="Artist" required=""></td>
+                        <td><input id="new_album" type="text" name="new_album" placeholder="Album" required=""></td>
+                        <td><input id="new_duration" type="text" name="new_duration" placeholder="Duration"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="1"><select class="form-select" id="new_release_year" name="new_release_year" placeholder="Release year">
+                            {%for year in range(1900, 2022)%}
+                            <option value="{{year}}">Released on: {{year}}</option>
+                            {%endfor%}
+                        </select></td>
+                        <td colspan="3"><textarea id="new_song_descr" name="new_song_descr" placeholder="Optional description"></textarea></td>
+                    </tr>
+                </tbody>
+            </form>
             </tr>
             <tr>
                 <ul class="list-group" id="song-search-results"></ul>
             </tr>
         </table>
         {% if playlist.page.commenting %}
-        <form action="{{url_for('delete_comment', key=playlist.id)}}" method="POST">
-            <table class="table" style="color: inherit">
-                {% if playlist.comments|length > 0 %}
+        {% if playlist.comments|length > 0 %}
+        <form action="{{url_for('delete_comment', key=playlist.id)}}" method="POST" name="comment_ids">
+            <table class="table table-striped" style="color: inherit">
                 <thead>
-                    <td>Delete</td>
+                    <td>Mark to delete</td>
                     <td>Author</td>
                     <td>Comment</td>
                     <td>Date</td>
                 </thead>
-                {% endif %}
                 {% for comment in playlist.comments %}
                 <tr>
-                    <td><input type="checkbox" name="{{comment.id}}" value="{{comment.id}}">Delete</td>
+                    <td><input type="checkbox" name="{{comment.id}}" value="{{comment.id}}"></td>
                     <td>{{comment.author}}</td>
                     <td>{{comment.content}}</td>
                     <td>{{comment.date}}</td>
                 </tr>
                 {% endfor%}
             </table>
-            <button>Submit</button>
+            <button class="btn btn-warning">Delete marked comments</button>
         </form>
+        {% endif %}
         {% endif %}
     </div>
 {% endblock %}
@@ -155,6 +165,7 @@
         document.querySelector("#new_artist").value = attr["artist"];
         document.querySelector("#new_duration").value = attr["duration"];
         document.querySelector("#new_album").value = attr["album"];
+        document.querySelector("#new_release_year").value = attr["release_year"]
     }
 
 
