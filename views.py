@@ -183,7 +183,10 @@ def playlist_add():
         playlist.page.set_commenting(form.commenting.data)
         playlist.page.set_password(form.privacy.data)
         current_app.logger.debug(form.date.data)
-        playlist.page.set_expiration(_datetime.datetime.now() + _datetime.timedelta(days=form.date.data))
+        if form.date.data is not None:
+            playlist.page.set_expiration(_datetime.datetime.now() + _datetime.timedelta(days=form.date.data))
+        else:
+            playlist.page.set_expiration(None)        
         if 'image' in request.files:
             image = request.files['image'].read()
             playlist.metadata.set_thumbnail(image)
