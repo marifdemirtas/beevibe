@@ -161,7 +161,7 @@ def export(key):
     export_obj = current_app.config["db"].get_playlist(int(key)).export()
     filename = 'attachment;filename=' + export_obj["title"] + '.json'
 
-    encoded_obj = json.dumps(export_obj, ensure_ascii=False).encode('utf8')
+    encoded_obj = json.dumps(export_obj, ensure_ascii=False).encode('utf8', 'ignore')
     return Response(encoded_obj,
                     mimetype="application/json",
                     headers={'Content-Disposition': filename, 'charset': 'utf-8'})
@@ -383,7 +383,7 @@ def delete_user(key):
     return redirect(url_for("index"))
 
 
-#@error_direction
+@error_direction
 def search_page():
     current_app.logger.debug(request.form)
     if request.form['query'] == "":
@@ -391,3 +391,12 @@ def search_page():
     results = current_app.config['db'].search_playlists_by_title(request.form['query'])
     current_app.logger.debug(results)
     return render_template("list-playlist.html", playlists=results, search=request.form["query"])
+
+@error_direction
+def profile_redir(name):
+    tup = current_app.config["db"].get_user_tuple(name)
+    if tup is not None:
+        key, *_ = tup
+        return redirect(url_for('user_ext', key=key))
+    else:
+        return abort(404)

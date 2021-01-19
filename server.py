@@ -37,6 +37,7 @@ def create_app():
     app.add_url_rule('/add_song/<int:key>', methods=['POST'], view_func=views.add_song)
     app.add_url_rule('/profile', endpoint='user',methods=['GET', 'POST'], view_func=views.profile)
     app.add_url_rule('/profile/<int:key>', endpoint='user_ext', view_func=views.public_profile)
+    app.add_url_rule('/profile/<string:name>', endpoint='user_ext_name', view_func=views.profile_redir)
     app.add_url_rule('/playlist/<int:key>/auth', endpoint='get_password_for', methods=["GET", "POST"], view_func=views.get_password_for)
     app.add_url_rule('/delete_user/<int:key>', endpoint='delete_user', methods=["GET"], view_func=views.delete_user)
     app.add_url_rule('/search_page', endpoint='search_page', methods=["POST"], view_func=views.search_page)
