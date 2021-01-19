@@ -246,14 +246,15 @@ class Database(object):
         '''
         with self.conn.cursor() as curr:
             for song_id in songs:
-                curr.execute('''DELETE FROM songplaylist_map WHERE
-                                song_id=%s AND playlist_id=%s;''',
-                             (song_id, key))
                 curr.execute('''SELECT * FROM songplaylist_map WHERE
                                 song_id=%s;''', (song_id,))
-                if curr.fetchone() is None:  # delete song from database since no one is referring to it
+                if len(curr.fetchmany(5)) == 1:
                     curr.execute('''DELETE FROM songs WHERE
                                     song_id=%s''', (song_id,))
+                else:
+                    curr.execute('''DELETE FROM songplaylist_map WHERE
+                                    song_id=%s AND playlist_id=%s;''',
+                                 (song_id, key))
             self.conn.commit()
         return self.get_playlist(key)
 
