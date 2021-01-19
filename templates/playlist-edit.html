@@ -74,10 +74,10 @@
                 <tbody>
                     <tr>
                         <td rowspan="2"><button class="btn btn-success" id="add_song">Add</button></td>
-                        <td><input id="new_song" type="text" name="new_song" placeholder="Song title" required=""></td>
-                        <td><input id="new_artist" type="text" name="new_artist" placeholder="Artist" required=""></td>
-                        <td><input id="new_album" type="text" name="new_album" placeholder="Album" required=""></td>
-                        <td><input id="new_duration" type="text" name="new_duration" placeholder="Duration"></td>
+                        <td><input id="new_song" type="text" name="new_song" maxlength="100" placeholder="Song title" required=""></td>
+                        <td><input id="new_artist" type="text" name="new_artist" maxlength="100" placeholder="Artist" required=""></td>
+                        <td><input id="new_album" type="text" name="new_album" maxlength="100" placeholder="Album" required=""></td>
+                        <td><input id="new_duration" type="number" min="0" step="1" name="new_duration" placeholder="Duration"></td>
                     </tr>
                     <tr>
                         <td colspan="1"><select class="form-select" id="new_release_year" name="new_release_year" placeholder="Release year">

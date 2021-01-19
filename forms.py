@@ -20,7 +20,7 @@ class RegisterForm(FlaskForm):
 
 
 class CreatePlaylistForm(FlaskForm):
-    title = StringField('Title of the playlist', validators=[DataRequired()])
+    title = StringField('Title of the playlist', validators=[DataRequired(), Length(min=1, max=100)])
     descr = TextAreaField('Description (optional):', validators=[Optional()])
     image = FileField("Thumbnail image (optional)", validators=[Optional(), FileAllowed(['jpg','jpeg','png'], 'Please upload a .jpg or .png file.')])
     color = ColorField('Background color: ', id="playlist_color")
