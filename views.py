@@ -237,8 +237,8 @@ def playlist_edit(key):
 def delete_comment(key):
     if not current_app.config['db'].check_auth(current_user.id, int(key)):
         return abort(403)
-    current_app.logger.debug(request.form)
-    comments = [int(cid[0]) for cid in request.form]
+    comments = [int(cid) for cid in request.form]
+    current_app.logger.debug(comments)
     current_app.config["db"].remove_comments_from_playlist(int(key), comments)
     return redirect(url_for("playlist_edit", key=key))
 
