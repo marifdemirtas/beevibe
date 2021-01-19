@@ -20,7 +20,7 @@
         </div>
         {% endif %}
         <p>Total duration: {{"%.2f"|format(playlist.total_duration/60)}} minutes</p>
-        <table class="table table-striped table-hover" style="color: inherit">
+        <table class="table table-striped" style="color: inherit">
             <thead>
                 <tr>
                     <td>Song</td>
@@ -53,7 +53,7 @@
         <a href="{{url_for('playlist_edit', key=playlist.id)}}"  style="float:right; margin-left: 1em; margin-bottom: 1em;" class="btn btn-info">Edit</a>
         {% endif %}
         {% if playlist.page.commenting%}
-        <table class="table table-striped table-hover" style="color: inherit">
+        <table class="table table-striped" style="color: inherit">
             {% if playlist.comments|length > 0 %}
             <thead>
                 <td>Author</td>
